@@ -6,9 +6,32 @@ import (
 	"gonum.org/v1/gonum/blas/cblas128"
 )
 
+type QuantumCircuit struct {
+	numQubits int
+	gates     []cblas128.General
+}
+
 func main() {
 
 }
+
+// Add a singular or multi-qubit Hadamard gate to this circuit.
+// Takes in a list of qubit indices that the Hadamard gate should apply to.
+//func (qc *QuantumCircuit) H(hQubits []int) {
+//	if len(hQubits) > qc.numQubits {
+//		panic("Too many qubits provided for H gate")
+//	}
+//
+//	// hLocations contains the locations, marked with 1, where the H gate will apply.
+//	var hLocations = make([]int, qc.numQubits)
+//	for _, q := range hQubits {
+//		if q < 0 || q >= qc.numQubits {
+//			panic("Qubit out of range")
+//		}
+//		hLocations[q] = 1
+//	}
+//	qc.gates = append(qc.gates, CreateH(hLocations))
+//}
 
 // Creates the Kronecker product of matrices A and B
 // Returns a reference to the matrix containing the result
@@ -52,19 +75,6 @@ func mul(a, b *cblas128.General) *cblas128.General {
 	}
 	cblas128.Gemm(blas.NoTrans, blas.NoTrans, 1, *a, *b, 0, c)
 	return &c
-}
-
-func I(r, c int) cblas128.General {
-	data := make([]complex128, r*c)
-	for i := range data {
-		data[i] = 1
-	}
-	return cblas128.General{
-		Rows:   r,
-		Cols:   c,
-		Stride: c,
-		Data:   data,
-	}
 }
 
 func FormatMat(X cblas128.General) string {
