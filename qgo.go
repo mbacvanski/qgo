@@ -4,11 +4,12 @@ import (
 	"fmt"
 	"gonum.org/v1/gonum/blas"
 	"gonum.org/v1/gonum/blas/cblas128"
+	"math"
 )
 
 type QuantumCircuit struct {
 	numQubits int
-	gates     []cblas128.General
+	gates     []Gate
 }
 
 func main() {
@@ -30,8 +31,30 @@ func main() {
 //		}
 //		hLocations[q] = 1
 //	}
-//	qc.gates = append(qc.gates, CreateH(hLocations))
+//	qc.gates = append(qc.gates, createH(hLocations))
 //}
+
+// Determines equality between two cblas128.General matrices, using epsilon a complex number.
+// Two matrices are equal if their dimensions are equal and their values are equal,
+// given a complex epsilon. Two complex numbers a+bi and c+di are considered to be equal
+// when abs(a-c) < real(epsilon) and abs(b-d) < imag(epsilon).
+func equal(a, b cblas128.General, epsilon complex128) bool {
+	if a.Rows != b.Rows || a.Cols != b.Cols || a.Stride != b.Stride {
+		return false
+	}
+	if len(a.Data) != len(b.Data) {
+		return false
+	}
+
+	for i := range a.Data {
+		if math.Abs(real(a.Data[i])-real(b.Data[i])) > real(epsilon) ||
+			math.Abs(imag(a.Data[i])-imag(b.Data[i])) > imag(epsilon) {
+			return false
+		}
+	}
+
+	return true
+}
 
 // Creates the Kronecker product of matrices A and B
 // Returns a reference to the matrix containing the result
@@ -47,14 +70,15 @@ func kronecker(a, b cblas128.General) *cblas128.General {
 
 	for rowA := 0; rowA < ar; rowA++ {
 		for colA := 0; colA < ac; colA++ {
+			indexA := rowA*a.Stride + colA
+
 			for rowB := 0; rowB < br; rowB++ {
 				for colB := 0; colB < bc; colB++ {
-					row := rowA*br + rowB
-					col := colA*bc + colB
-
-					indexOut := row*out.Stride + col
-					indexA := rowA*a.Stride + colA
 					indexB := rowB*b.Stride + colB
+
+					outRow := rowA*br + rowB
+					outCol := colA*bc + colB
+					indexOut := outRow*out.Stride + outCol
 					out.Data[indexOut] = a.Data[indexA] * b.Data[indexB]
 				}
 			}

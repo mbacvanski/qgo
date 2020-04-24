@@ -143,10 +143,61 @@ func Test_kronecker(t *testing.T) {
 				Data:   []complex128{1i / math.Sqrt2, 0, 2i / math.Sqrt2, 0},
 			},
 		},
+		{
+			name: "X I",
+			args: args{
+				a: cblas128.General{
+					Rows:   2,
+					Cols:   2,
+					Stride: 2,
+					Data:   []complex128{0, 1, 1, 0},
+				},
+				b: cblas128.General{
+					Rows:   2,
+					Cols:   2,
+					Stride: 2,
+					Data:   []complex128{1, 0, 0, 1},
+				},
+			},
+			want: &cblas128.General{
+				Rows:   4,
+				Cols:   4,
+				Stride: 4,
+				Data:   []complex128{0, 0, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 0},
+			},
+		},
+		{
+			name: "H I",
+			args: args{
+				a: cblas128.General{
+					Rows:   2,
+					Cols:   2,
+					Stride: 2,
+					Data:   []complex128{1 / math.Sqrt2, 1 / math.Sqrt2, 1 / math.Sqrt2, -1 / math.Sqrt2},
+				},
+				b: cblas128.General{
+					Rows:   2,
+					Cols:   2,
+					Stride: 2,
+					Data:   []complex128{1, 0, 0, 1},
+				},
+			},
+			want: &cblas128.General{
+				Rows:   4,
+				Cols:   4,
+				Stride: 4,
+				Data: []complex128{
+					0.70710678, 0, 0.70710678, 0,
+					0, 0.70710678, 0, 0.70710678,
+					0.70710678, 0, -0.70710678, 0,
+					0, 0.70710678, 0, -0.70710678,
+				},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := kronecker(tt.args.a, tt.args.b); !reflect.DeepEqual(got, tt.want) {
+			if got := kronecker(tt.args.a, tt.args.b); !equal(*got, *tt.want, 0.00000001+0.00000001i) {
 				t.Errorf("kronecker() = %v, want %v", got, tt.want)
 			}
 		})
