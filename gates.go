@@ -78,7 +78,7 @@ func createH(qubits []int) *Gate {
 }
 
 // Creates a single Pauli-X gate operating on the given qubit.
-// Will not fail if
+// Will not fail if given multiple qubits to apply X gate on.
 func createX(qubits []int) *Gate {
 	var mat cblas128.General
 	if qubits[0] == 0 {
@@ -89,9 +89,9 @@ func createX(qubits []int) *Gate {
 
 	for i := 1; i < len(qubits); i++ {
 		if qubits[i] == 0 {
-			mat = *kronecker(mat, X.General)
+			mat = *kronecker(mat, I.General)
 		} else if qubits[i] == 1 {
-			mat = *kronecker(mat, H.General)
+			mat = *kronecker(mat, X.General)
 		}
 	}
 
