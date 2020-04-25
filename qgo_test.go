@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"gonum.org/v1/gonum/blas/cblas128"
 	"math"
 	"reflect"
@@ -350,5 +351,132 @@ func Test_add(t *testing.T) {
 		Cols:   5,
 		Stride: 3,
 		Data:   []complex128{1, 2, 4},
+	})
+}
+
+func TestQuantumCircuit_H(t *testing.T) {
+	t.Run("Add H to circuit", func(t *testing.T) {
+		qc := &QuantumCircuit{
+			numQubits: 1,
+			gates:     []Gate{},
+		}
+		expected := Gate{
+			General: H,
+			name:    HADAMARD,
+		}
+		qc.H([]int{0})
+		if len(qc.gates) != 1 || !qc.gates[0].Equals(&expected, StdEpsilon) {
+			fmt.Printf("length %v", len(qc.gates))
+			t.Errorf("Add H to circuit makes circuit %v, expected %v", qc.gates[0], expected)
+		}
+	})
+
+	t.Run("Add three qubit H to circuit", func(t *testing.T) {
+		qc := &QuantumCircuit{
+			numQubits: 3,
+			gates:     []Gate{},
+		}
+		expected3 := Gate{
+			General: cblas128.General{
+				Rows:   8,
+				Cols:   8,
+				Stride: 8,
+				Data: []complex128{
+					0.35355339, 0.35355339, 0.35355339, 0.35355339, 0.35355339, 0.35355339, 0.35355339, 0.35355339,
+					0.35355339, -0.35355339, 0.35355339, -0.35355339, 0.35355339, -0.35355339, 0.35355339, -0.35355339,
+					0.35355339, 0.35355339, -0.35355339, -0.35355339, 0.35355339, 0.35355339, -0.35355339, -0.35355339,
+					0.35355339, -0.35355339, -0.35355339, 0.35355339, 0.35355339, -0.35355339, -0.35355339, 0.35355339,
+					0.35355339, 0.35355339, 0.35355339, 0.35355339, -0.35355339, -0.35355339, -0.35355339, -0.35355339,
+					0.35355339, -0.35355339, 0.35355339, -0.35355339, -0.35355339, 0.35355339, -0.35355339, 0.35355339,
+					0.35355339, 0.35355339, -0.35355339, -0.35355339, -0.35355339, -0.35355339, 0.35355339, 0.35355339,
+					0.35355339, -0.35355339, -0.35355339, 0.35355339, -0.35355339, 0.35355339, 0.35355339, -0.35355339,
+				},
+			},
+			name: HADAMARD,
+		}
+		qc.H([]int{0, 1, 2})
+		if len(qc.gates) != 1 || !qc.gates[0].Equals(&expected3, StdEpsilon) {
+			fmt.Printf("length %v", len(qc.gates))
+			t.Errorf("Add H to circuit makes circuit %v, expected %v", qc.gates[0], expected3)
+		}
+	})
+
+	t.Run("Panic on too many qubits", func(t *testing.T) {
+		qc := &QuantumCircuit{
+			numQubits: 2,
+			gates:     []Gate{},
+		}
+		defer func() {
+			if r := recover(); r == nil {
+				t.Errorf("Does not panic on too many qubits")
+			}
+		}()
+		qc.H([]int{0, 1, 2})
+	})
+}
+
+func TestQuantumCircuit_CX(t *testing.T) {
+	t.Run("Add CX to circuit", func(t *testing.T) {
+		qc := &QuantumCircuit{
+			numQubits: 2,
+			gates:     []Gate{},
+		}
+		expected := Gate{
+			General: cblas128.General{
+				Rows:   4,
+				Cols:   4,
+				Stride: 4,
+				Data: []complex128{
+					1, 0, 0, 0,
+					0, 1, 0, 0,
+					0, 0, 0, 1,
+					0, 0, 1, 0,
+				},
+			},
+			name: CX,
+		}
+		qc.CX(0, 1)
+		if len(qc.gates) != 1 || !qc.gates[0].Equals(&expected, StdEpsilon) {
+			fmt.Printf("length %v", len(qc.gates))
+			t.Errorf("Add CX to circuit makes circuit %v, expected %v", qc.gates[0], expected)
+		}
+	})
+
+	t.Run("Add CX skipping over qubits to circuit", func(t *testing.T) {
+		qc := &QuantumCircuit{
+			numQubits: 4,
+			gates:     []Gate{},
+		}
+		expected := Gate{
+			General: cblas128.General{
+				Rows:   16,
+				Cols:   16,
+				Stride: 16,
+				Data: []complex128{
+					1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+					0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+					0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+					0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+					0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+					0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+					0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0,
+					0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+					0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0,
+					0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0,
+					0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0,
+					0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0,
+					0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0,
+					0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0,
+					0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+					0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
+				},
+			},
+			name: CX,
+		}
+		qc.CX(2, 3)
+		if len(qc.gates) != 1 || !qc.gates[0].Equals(&expected, StdEpsilon) {
+			fmt.Printf("length %v", len(qc.gates))
+			t.Errorf("Add CX to circuit makes circuit %v, expected %v", qc.gates[0], expected)
+		}
 	})
 }

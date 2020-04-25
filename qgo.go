@@ -14,11 +14,21 @@ type QuantumCircuit struct {
 
 // Add a singular or multi-qubit Hadamard gate to this circuit.
 // Takes in a list of qubit indices that the Hadamard gate should apply to.
-//func (qc *QuantumCircuit) H(hQubits []int) {
-//	if len(hQubits) > qc.numQubits {
-//		panic("Too many qubits provided for H gate")
-//	}
-//	qc.gates = append(qc.gates, createH())
+func (qc *QuantumCircuit) H(hQubits []int) {
+	if len(hQubits) > qc.numQubits {
+		panic("Too many qubits provided for H gate")
+	}
+	qc.gates = append(qc.gates, *createH(hQubits, qc.numQubits))
+}
+
+// Adds a CNOT (C-X) gate to this circuit. Takes in the control and target
+// qubit indices that the gate should operate on.
+func (qc *QuantumCircuit) CX(control, target int) {
+	qc.gates = append(qc.gates, *createCX(control, target, qc.numQubits))
+}
+
+//func (qc *QuantumCircuit) compile() {
+//
 //}
 
 // Determines equality between two cblas128.General matrices, using epsilon a complex number.
