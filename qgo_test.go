@@ -480,3 +480,39 @@ func TestQuantumCircuit_CX(t *testing.T) {
 		}
 	})
 }
+
+func TestQuantumCircuit_Compile(t *testing.T) {
+	t.Run("Compile CX on two qubits", func(t *testing.T) {
+		qc := &QuantumCircuit{
+			numQubits: 2,
+			gates:     []Gate{*createCX(0, 1, 2)},
+		}
+		expected := *createX(0, 1)
+		qc.Compile()
+		if !qc.compiled.Equals(&expected, StdEpsilon) {
+			t.Errorf("Compiling X gate makes circuit %v, expected %v", qc.compiled, expected)
+		}
+	})
+
+	t.Run("Compile H(0) CX", func(t *testing.T) {
+		qc := &QuantumCircuit{
+			numQubits: 2,
+			gates:     []Gate{*createH([]int{0}, 2), *createCX(0, 1, 2)},
+		}
+		expectedMatrix := cblas128.General{
+			Rows:   4,
+			Cols:   4,
+			Stride: 4,
+			Data: []complex128{
+				0.70710678, 0, 0.70710678, 0,
+				0, 0.70710678, 0, 0.70710678,
+				0, 0.70710678, 0, -0.70710678,
+				0.70710678, 0, -0.70710678, 0,
+			},
+		}
+		qc.Compile()
+		if !equal(qc.compiled.General, expectedMatrix, StdEpsilon) {
+			t.Errorf("Compiling H(0) CX gate makes circuit %v, expected %v", qc.compiled.General, expectedMatrix)
+		}
+	})
+}

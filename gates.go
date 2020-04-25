@@ -170,6 +170,18 @@ func createCX(control, target, numQubits int) *Gate {
 	}
 }
 
+// Combines a set of gates into one using matrix multiplication
+func Combine(name GateName, matrices ...Gate) *Gate {
+	outMatrix := matrices[len(matrices)-1].General
+	for i := len(matrices) - 2; i >= 0; i-- {
+		outMatrix = *mul(&outMatrix, &matrices[i].General)
+	}
+	return &Gate{
+		General: outMatrix,
+		name:    name,
+	}
+}
+
 // Determines equality between two gates, using epsilon as a complex number.
 // Two gates are equal if their names are equal and their matrix representations
 // are also equal, given a complex epsilon. Two complex numbers a+bi and c+di

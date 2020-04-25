@@ -10,6 +10,7 @@ import (
 type QuantumCircuit struct {
 	numQubits int
 	gates     []Gate
+	compiled  Gate
 }
 
 // Add a singular or multi-qubit Hadamard gate to this circuit.
@@ -27,9 +28,10 @@ func (qc *QuantumCircuit) CX(control, target int) {
 	qc.gates = append(qc.gates, *createCX(control, target, qc.numQubits))
 }
 
-//func (qc *QuantumCircuit) compile() {
-//
-//}
+// Compiles all gates in the circuit into one compiled operation
+func (qc *QuantumCircuit) Compile() {
+	qc.compiled = *Combine(42, qc.gates...)
+}
 
 // Determines equality between two cblas128.General matrices, using epsilon a complex number.
 // Two matrices are equal if their dimensions are equal and their values are equal,

@@ -651,16 +651,76 @@ func Test_createCX(t *testing.T) {
 	}
 }
 
-/*
-&{{4 4 4 [
-(0+0i) (1+0i) (0+0i) (0+0i)
-(1+0i) (0+0i) (0+0i) (0+0i)
-(0+0i) (0+0i) (0+0i) (1+0i)
-(0+0i) (0+0i) (1+0i) (0+0i)]} 3}
+func TestCombine(t *testing.T) {
+	type args struct {
+		name     GateName
+		matrices []Gate
+	}
+	tests := []struct {
+		name string
+		args args
+		want *Gate
+	}{
+		{
+			name: "H H",
+			args: args{
+				name:     IDENTITY,
+				matrices: []Gate{*createH([]int{0}, 1), *createH([]int{0}, 1)},
+			},
+			want: &Gate{
+				General: I,
+				name:    IDENTITY,
+			},
+		},
+		{
+			name: "H(0) CX",
+			args: args{
+				name:     55,
+				matrices: []Gate{*createH([]int{0}, 2), *createCX(0, 1, 2)},
+			},
+			want: &Gate{
+				General: cblas128.General{
+					Rows:   4,
+					Cols:   4,
+					Stride: 4,
+					Data: []complex128{
+						0.70710678, 0, 0.70710678, 0,
+						0, 0.70710678, 0, 0.70710678,
+						0, 0.70710678, 0, -0.70710678,
+						0.70710678, 0, -0.70710678, 0,
+					},
+				},
+				name: 55,
+			},
+		},
 
-&{{4 4 4 [
-(1+0i) (0+0i) (0+0i) (0+0i)
-(0+0i) (1+0i) (0+0i) (0+0i)
-(0+0i) (0+0i) (0+0i) (1+0i)
-(0+0i) (0+0i) (1+0i) (0+0i)]} 3}
-*/
+		{
+			name: "CX H",
+			args: args{
+				name:     55,
+				matrices: []Gate{*createCX(0, 1, 2), *createH([]int{0}, 2)},
+			},
+			want: &Gate{
+				General: cblas128.General{
+					Rows:   4,
+					Cols:   4,
+					Stride: 4,
+					Data: []complex128{
+						0.70710678, 0, 0, 0.70710678,
+						0, 0.70710678, 0.70710678, 0,
+						0.70710678, 0, 0, -0.70710678,
+						0, 0.70710678, -0.70710678, 0,
+					},
+				},
+				name: 55,
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := Combine(tt.args.name, tt.args.matrices...); !got.Equals(tt.want, StdEpsilon) {
+				t.Errorf("Combine() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
