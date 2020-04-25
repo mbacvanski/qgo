@@ -60,7 +60,8 @@ func TestGate_Name(t *testing.T) {
 
 func TestCreateH(t *testing.T) {
 	type args struct {
-		qubits []int
+		qubits    []int
+		numQubits int
 	}
 	tests := []struct {
 		name string
@@ -70,7 +71,8 @@ func TestCreateH(t *testing.T) {
 		{
 			name: "Single qubit Hadamard",
 			args: args{
-				qubits: []int{1},
+				qubits:    []int{0},
+				numQubits: 1,
 			},
 			want: &Gate{
 				General: cblas128.General{
@@ -85,7 +87,8 @@ func TestCreateH(t *testing.T) {
 		{
 			name: "Two qubit Hadamard, next to each other",
 			args: args{
-				qubits: []int{1, 1},
+				qubits:    []int{0, 1},
+				numQubits: 2,
 			},
 			want: &Gate{
 				General: cblas128.General{
@@ -105,7 +108,8 @@ func TestCreateH(t *testing.T) {
 		{
 			name: "Three qubit Hadamard, next to each other",
 			args: args{
-				qubits: []int{1, 1, 1},
+				qubits:    []int{0, 1, 2},
+				numQubits: 3,
 			},
 			want: &Gate{
 				General: cblas128.General{
@@ -127,7 +131,8 @@ func TestCreateH(t *testing.T) {
 		{
 			name: "H I",
 			args: args{
-				qubits: []int{1, 0},
+				qubits:    []int{0},
+				numQubits: 2,
 			},
 			want: &Gate{
 				General: cblas128.General{
@@ -147,7 +152,8 @@ func TestCreateH(t *testing.T) {
 		{
 			name: "I H I",
 			args: args{
-				qubits: []int{0, 1, 0},
+				qubits:    []int{1},
+				numQubits: 3,
 			},
 			want: &Gate{
 				General: cblas128.General{
@@ -170,7 +176,7 @@ func TestCreateH(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := createH(tt.args.qubits); !got.Equals(tt.want, StdEpsilon) {
+			if got := createH(tt.args.qubits, tt.args.numQubits); !got.Equals(tt.want, StdEpsilon) {
 				t.Errorf("createH() = %v, want %v", got, tt.want)
 			}
 		})

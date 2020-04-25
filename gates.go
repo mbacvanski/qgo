@@ -3,6 +3,7 @@ package main
 import (
 	"gonum.org/v1/gonum/blas/cblas128"
 	"math"
+	"sort"
 )
 
 type GateName int
@@ -77,19 +78,26 @@ var (
 )
 
 // Creates a multi-qubit Hadamard gate across the qubits specified here
-func createH(qubits []int) *Gate {
-	var mat cblas128.General
-	if qubits[0] == 0 {
-		mat = I
-	} else if qubits[0] == 1 {
-		mat = H
+func createH(qubits []int, numQubits int) *Gate {
+	sort.Ints(qubits)
+
+	mat := cblas128.General{
+		Rows:   1,
+		Cols:   1,
+		Stride: 1,
+		Data:   []complex128{1},
 	}
 
-	for i := 1; i < len(qubits); i++ {
-		if qubits[i] == 0 {
-			mat = *kronecker(mat, I)
-		} else if qubits[i] == 1 {
+	qubitCount := 0
+	for i := 0; i < numQubits; i++ {
+		if i == qubits[qubitCount] {
 			mat = *kronecker(mat, H)
+
+			if qubitCount < len(qubits)-1 {
+				qubitCount++
+			}
+		} else {
+			mat = *kronecker(mat, I)
 		}
 	}
 

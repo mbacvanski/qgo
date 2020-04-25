@@ -12,26 +12,13 @@ type QuantumCircuit struct {
 	gates     []Gate
 }
 
-func main() {
-
-}
-
 // Add a singular or multi-qubit Hadamard gate to this circuit.
 // Takes in a list of qubit indices that the Hadamard gate should apply to.
 //func (qc *QuantumCircuit) H(hQubits []int) {
 //	if len(hQubits) > qc.numQubits {
 //		panic("Too many qubits provided for H gate")
 //	}
-//
-//	// hLocations contains the locations, marked with 1, where the H gate will apply.
-//	var hLocations = make([]int, qc.numQubits)
-//	for _, q := range hQubits {
-//		if q < 0 || q >= qc.numQubits {
-//			panic("Qubit out of range")
-//		}
-//		hLocations[q] = 1
-//	}
-//	qc.gates = append(qc.gates, createH(hLocations))
+//	qc.gates = append(qc.gates, createH())
 //}
 
 // Determines equality between two cblas128.General matrices, using epsilon a complex number.
