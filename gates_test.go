@@ -470,7 +470,8 @@ func TestGate_Equals(t *testing.T) {
 
 func Test_createX(t *testing.T) {
 	type args struct {
-		qubits []int
+		qubit     int
+		numQubits int
 	}
 	tests := []struct {
 		name string
@@ -480,7 +481,8 @@ func Test_createX(t *testing.T) {
 		{
 			name: "Single Qubit X",
 			args: args{
-				qubits: []int{1},
+				qubit:     0,
+				numQubits: 1,
 			},
 			want: &Gate{
 				General: cblas128.General{
@@ -489,33 +491,14 @@ func Test_createX(t *testing.T) {
 					Stride: 2,
 					Data:   []complex128{0, 1, 1, 0},
 				},
-				name: PAULI_X,
-			},
-		},
-		{
-			name: "X X",
-			args: args{
-				qubits: []int{1, 1},
-			},
-			want: &Gate{
-				General: cblas128.General{
-					Rows:   4,
-					Cols:   4,
-					Stride: 4,
-					Data: []complex128{
-						0, 0, 0, 1,
-						0, 0, 1, 0,
-						0, 1, 0, 0,
-						1, 0, 0, 0,
-					},
-				},
-				name: PAULI_X,
+				name: PAULIX,
 			},
 		},
 		{
 			name: "X I",
 			args: args{
-				qubits: []int{1, 0},
+				qubit:     0,
+				numQubits: 2,
 			},
 			want: &Gate{
 				General: cblas128.General{
@@ -529,13 +512,14 @@ func Test_createX(t *testing.T) {
 						0, 1, 0, 0,
 					},
 				},
-				name: PAULI_X,
+				name: PAULIX,
 			},
 		},
 		{
 			name: "I X",
 			args: args{
-				qubits: []int{0, 1},
+				qubit:     1,
+				numQubits: 2,
 			},
 			want: &Gate{
 				General: cblas128.General{
@@ -549,19 +533,15 @@ func Test_createX(t *testing.T) {
 						0, 0, 1, 0,
 					},
 				},
-				name: PAULI_X,
+				name: PAULIX,
 			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := createX(tt.args.qubits); !got.Equals(tt.want, StdEpsilon) {
+			if got := createX(tt.args.qubit, tt.args.numQubits); !got.Equals(tt.want, StdEpsilon) {
 				t.Errorf("createX() = %v, want %v", got, tt.want)
 			}
 		})
 	}
 }
-
-/*
-&{{4 4 4 [(0+0i) (0+0i) (1+0i) (0+0i) (0+0i) (0+0i) (0+0i) (1+0i) (1+0i) (0+0i) (0+0i) (0+0i) (0+0i) (1+0i) (0+0i) (0+0i)]} 2}
-&{{4 4 4 [(0+0i) (0+0i) (1+0i) (0+0i) (0+0i) (0+0i) (0+0i) (1+0i) (1+0i) (0+0i) (0+0i) (0+0i) (0+0i) (1+0i) (0+0i) (0+0i)]} 0} */

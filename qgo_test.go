@@ -269,3 +269,63 @@ func Test_mul(t *testing.T) {
 		})
 	}
 }
+
+func Test_add(t *testing.T) {
+	type args struct {
+		a *cblas128.General
+		b *cblas128.General
+	}
+	tests := []struct {
+		name string
+		args args
+		want *cblas128.General
+	}{
+		{
+			name: "Add 2x2",
+			args: args{
+				a: &cblas128.General{
+					Rows:   2,
+					Cols:   2,
+					Stride: 2,
+					Data:   []complex128{1, 2, 3, 4},
+				},
+				b: &cblas128.General{
+					Rows:   2,
+					Cols:   2,
+					Stride: 2,
+					Data:   []complex128{5, 6, 7, 8},
+				},
+			},
+			want: &cblas128.General{
+				Rows:   2,
+				Cols:   2,
+				Stride: 2,
+				Data:   []complex128{6, 8, 10, 12},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := add(tt.args.a, tt.args.b); !equal(*got, *tt.want, StdEpsilon) {
+				t.Errorf("add() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+	defer func() {
+		if r := recover(); r == nil {
+			t.Errorf("Does not panic on mismatched dimensions")
+		}
+	}()
+
+	add(&cblas128.General{
+		Rows:   2,
+		Cols:   2,
+		Stride: 2,
+		Data:   []complex128{1, 2, 3, 4},
+	}, &cblas128.General{
+		Rows:   1,
+		Cols:   5,
+		Stride: 3,
+		Data:   []complex128{1, 2, 4},
+	})
+}

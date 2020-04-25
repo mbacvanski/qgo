@@ -101,6 +101,25 @@ func mul(a, b *cblas128.General) *cblas128.General {
 	return &c
 }
 
+func add(a, b *cblas128.General) *cblas128.General {
+	if a.Rows != b.Rows || a.Cols != b.Cols || a.Stride != b.Stride {
+		panic("Cannot add matrices of differing dimensions")
+	}
+
+	out := cblas128.General{
+		Rows:   b.Rows,
+		Cols:   b.Cols,
+		Stride: b.Stride,
+		Data:   make([]complex128, b.Rows*b.Cols),
+	}
+
+	for i := range a.Data {
+		out.Data[i] = a.Data[i] + b.Data[i]
+	}
+
+	return &out
+}
+
 func FormatMat(X cblas128.General) string {
 	formatNum := func(c complex128) string {
 		formatImag := func(f float64) string {
