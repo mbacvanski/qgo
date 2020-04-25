@@ -545,3 +545,116 @@ func Test_createX(t *testing.T) {
 		})
 	}
 }
+
+func Test_createCX(t *testing.T) {
+	type args struct {
+		control   int
+		target    int
+		numQubits int
+	}
+	tests := []struct {
+		name string
+		args args
+		want *Gate
+	}{
+		{
+			name: "Standard CX",
+			args: args{
+				control:   0,
+				target:    1,
+				numQubits: 2,
+			},
+			want: &Gate{
+				General: cblas128.General{
+					Rows:   4,
+					Cols:   4,
+					Stride: 4,
+					Data: []complex128{
+						1, 0, 0, 0,
+						0, 1, 0, 0,
+						0, 0, 0, 1,
+						0, 0, 1, 0,
+					},
+				},
+				name: CX,
+			},
+		},
+		{
+			name: "Upside down CX",
+			args: args{
+				control:   1,
+				target:    0,
+				numQubits: 2,
+			},
+			want: &Gate{
+				General: cblas128.General{
+					Rows:   4,
+					Cols:   4,
+					Stride: 4,
+					Data: []complex128{
+						1, 0, 0, 0,
+						0, 0, 0, 1,
+						0, 0, 1, 0,
+						0, 1, 0, 0,
+					},
+				},
+				name: CX,
+			},
+		},
+		{
+			name: "4 Qubits CX",
+			args: args{
+				control:   2,
+				target:    3,
+				numQubits: 4,
+			},
+			want: &Gate{
+				General: cblas128.General{
+					Rows:   16,
+					Cols:   16,
+					Stride: 16,
+					Data: []complex128{
+						1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+						0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+						0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+						0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+						0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+						0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+						0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0,
+						0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+						0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0,
+						0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0,
+						0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0,
+						0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0,
+						0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0,
+						0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0,
+						0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+						0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
+					},
+				},
+				name: CX,
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := createCX(tt.args.control, tt.args.target, tt.args.numQubits); !got.Equals(tt.want, StdEpsilon) {
+				t.Errorf("createCX() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+/*
+&{{4 4 4 [
+(0+0i) (1+0i) (0+0i) (0+0i)
+(1+0i) (0+0i) (0+0i) (0+0i)
+(0+0i) (0+0i) (0+0i) (1+0i)
+(0+0i) (0+0i) (1+0i) (0+0i)]} 3}
+
+&{{4 4 4 [
+(1+0i) (0+0i) (0+0i) (0+0i)
+(0+0i) (1+0i) (0+0i) (0+0i)
+(0+0i) (0+0i) (0+0i) (1+0i)
+(0+0i) (0+0i) (1+0i) (0+0i)]} 3}
+*/

@@ -260,6 +260,29 @@ func Test_mul(t *testing.T) {
 				Data:   []complex128{0, 0, 0, 1},
 			},
 		},
+		{
+			name: "Ket * Bra",
+			args: args{
+				a: &cblas128.General{ // Ket of 0
+					Rows:   2,
+					Cols:   1,
+					Stride: 1,
+					Data:   []complex128{1, 0},
+				},
+				b: &cblas128.General{ // Bra of 0
+					Rows:   1,
+					Cols:   2,
+					Stride: 2,
+					Data:   []complex128{1, 0},
+				},
+			},
+			want: &cblas128.General{
+				Rows:   2,
+				Cols:   2,
+				Stride: 2,
+				Data:   []complex128{1, 0, 0, 0},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

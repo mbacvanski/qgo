@@ -26,18 +26,32 @@ type Gate struct {
 var (
 	// UTILITY MATRICES
 
-	ZERO = cblas128.General{ // Matrix of all 0s
+	ZeroKet = cblas128.General{ // Ket of 0
 		Rows:   2,
-		Cols:   2,
-		Stride: 2,
-		Data:   []complex128{0, 0, 0, 0},
+		Cols:   1,
+		Stride: 1,
+		Data:   []complex128{1, 0},
 	}
 
-	ONE = cblas128.General{ // Matrix of all 1s
-		Rows:   2,
+	ZeroBra = cblas128.General{ // Bra of 0
+		Rows:   1,
 		Cols:   2,
 		Stride: 2,
-		Data:   []complex128{1, 1, 1, 1},
+		Data:   []complex128{1, 0},
+	}
+
+	OneKet = cblas128.General{ // Ket of 1
+		Rows:   2,
+		Cols:   1,
+		Stride: 1,
+		Data:   []complex128{0, 1},
+	}
+
+	OneBra = cblas128.General{
+		Rows:   1,
+		Cols:   2,
+		Stride: 2,
+		Data:   []complex128{0, 1},
 	}
 
 	I = cblas128.General{ // Identity Matrix
@@ -113,41 +127,35 @@ func createX(qubit, numQubits int) *Gate {
 // the qubit that acts as the target, and the total number of qubits.
 // Reference: http://www.sakkaris.com/tutorials/quantum_control_gates.html
 func createCX(control, target, numQubits int) *Gate {
-	var iMatrix cblas128.General
-	var xMatrix cblas128.General
-
-	if control == 0 {
-		iMatrix = ZERO
-		xMatrix = I
-	} else if target == 0 {
-		iMatrix = I
-		xMatrix = ONE
-	} else {
-		iMatrix = ONE
-		xMatrix = ONE
+	controlMatrix := cblas128.General{
+		Rows:   1,
+		Cols:   1,
+		Stride: 1,
+		Data:   []complex128{1},
+	}
+	targetMatrix := cblas128.General{
+		Rows:   1,
+		Cols:   1,
+		Stride: 1,
+		Data:   []complex128{1},
 	}
 
 	// If the control qubit is |0> leave the target qubit alone
-	for i := 1; i < numQubits; i++ {
-		if i == control {
-			iMatrix = *kronecker(iMatrix, ZERO)
-		} else {
-			iMatrix = *kronecker(iMatrix, I)
-		}
-	}
-
 	// If the control qubit is |1>, apply X to the target qubit
-	for i := 1; i < numQubits; i++ {
+	for i := 0; i < numQubits; i++ {
 		if i == control {
-			xMatrix = *kronecker(xMatrix, ONE)
+			controlMatrix = *kronecker(controlMatrix, *mul(&ZeroKet, &ZeroBra))
+			targetMatrix = *kronecker(targetMatrix, *mul(&OneKet, &OneBra))
 		} else if i == target {
-			xMatrix = *kronecker(xMatrix, X)
+			controlMatrix = *kronecker(controlMatrix, I)
+			targetMatrix = *kronecker(targetMatrix, X)
 		} else {
-			xMatrix = *kronecker(xMatrix, I)
+			controlMatrix = *kronecker(controlMatrix, I)
+			targetMatrix = *kronecker(targetMatrix, I)
 		}
 	}
 
-	combinedMatrix := add(&iMatrix, &xMatrix)
+	combinedMatrix := add(&controlMatrix, &targetMatrix)
 	return &Gate{
 		General: *combinedMatrix,
 		name:    CX,
