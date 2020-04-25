@@ -40,7 +40,7 @@ func TestGate_Name(t *testing.T) {
 					Stride: 2,
 					Data:   []complex128{1, 0, 0, 1},
 				},
-				name: IDENTITY,
+				name: WIRE,
 			},
 			want: "Identity",
 		},
@@ -258,7 +258,7 @@ func TestGate_Equals(t *testing.T) {
 						Stride: 2,
 						Data:   []complex128{1, 2, 3, 4},
 					},
-					name: IDENTITY,
+					name: WIRE,
 				},
 				epsilon: 0.000001 + 0.000001i,
 			},
@@ -664,12 +664,12 @@ func TestCombine(t *testing.T) {
 		{
 			name: "H H",
 			args: args{
-				name:     IDENTITY,
+				name:     WIRE,
 				matrices: []Gate{*createH([]int{0}, 1), *createH([]int{0}, 1)},
 			},
 			want: &Gate{
 				General: I,
-				name:    IDENTITY,
+				name:    WIRE,
 			},
 		},
 		{

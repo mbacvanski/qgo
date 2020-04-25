@@ -516,3 +516,101 @@ func TestQuantumCircuit_Compile(t *testing.T) {
 		}
 	})
 }
+
+func TestQuantumCircuit_Exec(t *testing.T) {
+	type fields struct {
+		numQubits int
+		gates     []Gate
+		compiled  Gate
+	}
+	type args struct {
+		register []cblas128.General
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   *QuantumCircuitExecution
+	}{
+		{
+			name: "Single qubit wire",
+			fields: fields{
+				numQubits: 1,
+				gates: []Gate{
+					{
+						General: I,
+						name:    WIRE,
+					},
+				},
+				compiled: Gate{
+					General: I,
+					name:    WIRE,
+				},
+			},
+			args: args{
+				register: []cblas128.General{ZeroKet},
+			},
+			want: &QuantumCircuitExecution{
+				in:  []cblas128.General{ZeroKet},
+				out: ZeroKet,
+			},
+		},
+		{
+			name: "Two-qubit Hadamard on |01>",
+			fields: fields{
+				numQubits: 2,
+				gates: []Gate{
+					*createH([]int{0, 1}, 2),
+				},
+				compiled: *createH([]int{0, 1}, 2),
+			},
+			args: args{
+				register: []cblas128.General{ZeroKet, OneKet},
+			},
+			want: &QuantumCircuitExecution{
+				in: []cblas128.General{ZeroKet, OneKet},
+				out: cblas128.General{
+					Rows:   4,
+					Cols:   1,
+					Stride: 1,
+					Data:   []complex128{0.5, -0.5, 0.5, -0.5},
+				},
+			},
+		},
+		{
+			name: "Three qubit Hadamard on |1+->",
+			fields: fields{
+				numQubits: 3,
+				gates: []Gate{
+					*createH([]int{0, 1, 2}, 3),
+				},
+				compiled: *createH([]int{0, 1, 2}, 3),
+			},
+			args: args{
+				register: []cblas128.General{OneKet, HPlusKet, HMinusKet},
+			},
+			want: &QuantumCircuitExecution{
+				in: []cblas128.General{OneKet, HPlusKet, HMinusKet},
+				out: cblas128.General{
+					Rows:   8,
+					Cols:   1,
+					Stride: 1,
+					Data:   []complex128{0, 0.70710678, 0, 0, 0, -0.70710678, 0, 0},
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			qc := &QuantumCircuit{
+				numQubits: tt.fields.numQubits,
+				gates:     tt.fields.gates,
+				compiled:  tt.fields.compiled,
+			}
+			qc.Compile()
+			if got := qc.Exec(tt.args.register); !equal(got.out, tt.want.out, StdEpsilon) {
+				t.Errorf("Exec() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

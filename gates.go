@@ -10,7 +10,7 @@ type GateName int
 
 const (
 	HADAMARD = iota
-	IDENTITY = iota
+	WIRE     = iota
 	PAULIX   = iota
 	CX       = iota
 )
@@ -27,32 +27,46 @@ type Gate struct {
 var (
 	// UTILITY MATRICES
 
-	ZeroKet = cblas128.General{ // Ket of 0
+	ZeroKet = cblas128.General{ // Ket of 0 = |0>
 		Rows:   2,
 		Cols:   1,
 		Stride: 1,
 		Data:   []complex128{1, 0},
 	}
 
-	ZeroBra = cblas128.General{ // Bra of 0
+	ZeroBra = cblas128.General{ // Bra of 0 = <0|
 		Rows:   1,
 		Cols:   2,
 		Stride: 2,
 		Data:   []complex128{1, 0},
 	}
 
-	OneKet = cblas128.General{ // Ket of 1
+	OneKet = cblas128.General{ // Ket of 1 = |1>
 		Rows:   2,
 		Cols:   1,
 		Stride: 1,
 		Data:   []complex128{0, 1},
 	}
 
-	OneBra = cblas128.General{
+	OneBra = cblas128.General{ // Bra of 1 = <1|
 		Rows:   1,
 		Cols:   2,
 		Stride: 2,
 		Data:   []complex128{0, 1},
+	}
+
+	HPlusKet = cblas128.General{ // Ket of hadamard plus state = |+>
+		Rows:   2,
+		Cols:   1,
+		Stride: 1,
+		Data:   []complex128{1 / math.Sqrt2, 1 / math.Sqrt2},
+	}
+
+	HMinusKet = cblas128.General{ // Ket of hadamard minus state = |->
+		Rows:   2,
+		Cols:   1,
+		Stride: 1,
+		Data:   []complex128{1 / math.Sqrt2, -1 / math.Sqrt2},
 	}
 
 	I = cblas128.General{ // Identity Matrix

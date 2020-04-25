@@ -13,6 +13,12 @@ type QuantumCircuit struct {
 	compiled  Gate
 }
 
+type QuantumCircuitExecution struct {
+	in       []cblas128.General
+	register cblas128.General
+	out      cblas128.General
+}
+
 // Add a singular or multi-qubit Hadamard gate to this circuit.
 // Takes in a list of qubit indices that the Hadamard gate should apply to.
 func (qc *QuantumCircuit) H(hQubits []int) {
@@ -31,6 +37,30 @@ func (qc *QuantumCircuit) CX(control, target int) {
 // Compiles all gates in the circuit into one compiled operation
 func (qc *QuantumCircuit) Compile() {
 	qc.compiled = *Combine(42, qc.gates...)
+}
+
+// Executes the circuit with the given register as input.
+// Register is given as an array of 2x1 matrices, given each state.
+func (qc *QuantumCircuit) Exec(qubitStates []cblas128.General) *QuantumCircuitExecution {
+	if len(qubitStates) != qc.numQubits {
+		panic(fmt.Sprintf("Cannot execute qubitStates of size %v on circuit with %v qubits", len(qubitStates), qc.numQubits))
+	}
+
+	input := cblas128.General{
+		Rows:   1,
+		Cols:   1,
+		Stride: 1,
+		Data:   []complex128{1},
+	}
+	for i := 0; i < len(qubitStates); i++ {
+		input = *kronecker(input, qubitStates[i])
+	}
+
+	return &QuantumCircuitExecution{
+		in:       qubitStates,
+		register: input,
+		out:      *mul(&qc.compiled.General, &input),
+	}
 }
 
 // Determines equality between two cblas128.General matrices, using epsilon a complex number.
