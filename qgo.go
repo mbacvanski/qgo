@@ -8,9 +8,10 @@ import (
 )
 
 type QuantumCircuit struct {
-	numQubits int
-	gates     []Gate
-	compiled  Gate
+	numQubits    int
+	gates        []Gate
+	compileValid bool
+	compiled     Gate
 }
 
 type QuantumCircuitExecution struct {
@@ -19,24 +20,30 @@ type QuantumCircuitExecution struct {
 	out      cblas128.General
 }
 
+func (qc *QuantumCircuit) addGate(g Gate) {
+	qc.compileValid = false
+	qc.gates = append(qc.gates, g)
+}
+
 // Add a singular or multi-qubit Hadamard gate to this circuit.
 // Takes in a list of qubit indices that the Hadamard gate should apply to.
 func (qc *QuantumCircuit) H(hQubits []int) {
 	if len(hQubits) > qc.numQubits {
 		panic("Too many qubits provided for H gate")
 	}
-	qc.gates = append(qc.gates, *createH(hQubits, qc.numQubits))
+	qc.addGate(*createH(hQubits, qc.numQubits))
 }
 
 // Adds a CNOT (C-X) gate to this circuit. Takes in the control and target
 // qubit indices that the gate should operate on.
 func (qc *QuantumCircuit) CX(control, target int) {
-	qc.gates = append(qc.gates, *createCX(control, target, qc.numQubits))
+	qc.addGate(*createCX(control, target, qc.numQubits))
 }
 
 // Compiles all gates in the circuit into one compiled operation
 func (qc *QuantumCircuit) Compile() {
 	qc.compiled = *Combine(42, qc.gates...)
+	qc.compileValid = true
 }
 
 // Executes the circuit with the given register as input.
@@ -44,6 +51,10 @@ func (qc *QuantumCircuit) Compile() {
 func (qc *QuantumCircuit) Exec(qubitStates []cblas128.General) *QuantumCircuitExecution {
 	if len(qubitStates) != qc.numQubits {
 		panic(fmt.Sprintf("Cannot execute qubitStates of size %v on circuit with %v qubits", len(qubitStates), qc.numQubits))
+	}
+
+	if !qc.compileValid {
+		qc.Compile()
 	}
 
 	input := cblas128.General{

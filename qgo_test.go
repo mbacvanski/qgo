@@ -487,10 +487,13 @@ func TestQuantumCircuit_Compile(t *testing.T) {
 			numQubits: 2,
 			gates:     []Gate{*createCX(0, 1, 2)},
 		}
-		expected := *createX(0, 1)
+		expected := *createCX(0, 1, 2)
 		qc.Compile()
-		if !qc.compiled.Equals(&expected, StdEpsilon) {
+		if !equal(qc.compiled.General, expected.General, StdEpsilon) {
 			t.Errorf("Compiling X gate makes circuit %v, expected %v", qc.compiled, expected)
+		}
+		if !qc.compileValid {
+			t.Errorf("Compiling circuit does not make compile valid")
 		}
 	})
 
@@ -513,6 +516,9 @@ func TestQuantumCircuit_Compile(t *testing.T) {
 		qc.Compile()
 		if !equal(qc.compiled.General, expectedMatrix, StdEpsilon) {
 			t.Errorf("Compiling H(0) CX gate makes circuit %v, expected %v", qc.compiled.General, expectedMatrix)
+		}
+		if !qc.compileValid {
+			t.Errorf("Compiling circuit does not make compile valid")
 		}
 	})
 }
@@ -607,10 +613,42 @@ func TestQuantumCircuit_Exec(t *testing.T) {
 				gates:     tt.fields.gates,
 				compiled:  tt.fields.compiled,
 			}
-			qc.Compile()
 			if got := qc.Exec(tt.args.register); !equal(got.out, tt.want.out, StdEpsilon) {
 				t.Errorf("Exec() = %v, want %v", got, tt.want)
 			}
 		})
 	}
+}
+
+func TestQuantumCircuit_addGate(t *testing.T) {
+	h := createH([]int{0, 1}, 2)
+	t.Run("Add gate to empty circuit", func(t *testing.T) {
+		qc := &QuantumCircuit{
+			numQubits:    2,
+			gates:        []Gate{},
+			compileValid: false,
+			compiled:     Gate{},
+		}
+		g := h
+		qc.addGate(*g)
+
+		if !(len(qc.gates) == 1) || !qc.gates[0].Equals(g, StdEpsilon) || qc.compileValid {
+			t.Errorf("addGate() = %v, want %v", qc.gates, []Gate{*g})
+		}
+	})
+
+	t.Run("Add gate to existing compiled circuit", func(t *testing.T) {
+		qc := &QuantumCircuit{
+			numQubits:    2,
+			gates:        []Gate{*h},
+			compileValid: true,
+			compiled:     *h,
+		}
+
+		cx := createCX(0, 1, 2)
+		qc.addGate(*cx)
+		if !(len(qc.gates) == 2) || !qc.gates[0].Equals(h, StdEpsilon) || !qc.gates[1].Equals(cx, StdEpsilon) || qc.compileValid {
+			t.Errorf("addGate() = %v, want %v", qc.gates, []Gate{*h, *cx})
+		}
+	})
 }
