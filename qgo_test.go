@@ -50,6 +50,19 @@ func Test_FormatMat(t *testing.T) {
 				" 0, 0, 0, 1, \n" +
 				" 0, 0, 1, 0]",
 		},
+		{
+			name: "Matrix with real and imaginary components",
+			mat: cblas128.General{
+				Rows:   2,
+				Cols:   2,
+				Stride: 2,
+				Data: []complex128{
+					1.9 + 3.2i, 3.1 + 1.01i,
+					4 + 5i, 2.3 - 6i,
+				},
+			},
+			expected: "[(1.9+3.2i), (3.1+1.01i), \n (4+5i), (2.3+-6i)]",
+		},
 	}
 
 	for _, tt := range tests {
@@ -618,6 +631,22 @@ func TestQuantumCircuit_Exec(t *testing.T) {
 			}
 		})
 	}
+	t.Run("Panic on not enough qubits", func(t *testing.T) {
+		qc := QuantumCircuit{
+			numQubits:    2,
+			gates:        []Gate{*createH([]int{0}, 2)},
+			compileValid: false,
+			compiled:     Gate{},
+		}
+
+		defer func() {
+			if r := recover(); r == nil {
+				t.Errorf("Does not panic on not enough qubit inputs")
+			}
+		}()
+
+		qc.Exec([]cblas128.General{ZeroKet})
+	})
 }
 
 func TestQuantumCircuit_addGate(t *testing.T) {
