@@ -1,7 +1,6 @@
 package main
 
 import (
-	"gonum.org/v1/gonum/blas/cblas128"
 	"math"
 	"testing"
 )
@@ -10,8 +9,8 @@ const StdEpsilon = 0.00000001 + 0.00000001i
 
 func TestGate_Name(t *testing.T) {
 	type fields struct {
-		General cblas128.General
-		name    GateName
+		Matrix Matrix
+		name   GateName
 	}
 	tests := []struct {
 		name   string
@@ -21,7 +20,7 @@ func TestGate_Name(t *testing.T) {
 		{
 			name: "Single Hadamard Gate",
 			fields: fields{
-				General: cblas128.General{
+				Matrix: Matrix{
 					Rows:   2,
 					Cols:   2,
 					Stride: 2,
@@ -34,7 +33,7 @@ func TestGate_Name(t *testing.T) {
 		{
 			name: "Single Wire (Identity Gate)",
 			fields: fields{
-				General: cblas128.General{
+				Matrix: Matrix{
 					Rows:   2,
 					Cols:   2,
 					Stride: 2,
@@ -48,8 +47,8 @@ func TestGate_Name(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			g := &Gate{
-				General: tt.fields.General,
-				name:    tt.fields.name,
+				Matrix: tt.fields.Matrix,
+				name:   tt.fields.name,
 			}
 			if got := g.Name(); got != tt.want {
 				t.Errorf("Name() = %v, want %v", got, tt.want)
@@ -75,7 +74,7 @@ func TestCreateH(t *testing.T) {
 				numQubits: 1,
 			},
 			want: &Gate{
-				General: cblas128.General{
+				Matrix: Matrix{
 					Rows:   2,
 					Cols:   2,
 					Stride: 2,
@@ -91,7 +90,7 @@ func TestCreateH(t *testing.T) {
 				numQubits: 2,
 			},
 			want: &Gate{
-				General: cblas128.General{
+				Matrix: Matrix{
 					Rows:   4,
 					Cols:   4,
 					Stride: 4,
@@ -112,7 +111,7 @@ func TestCreateH(t *testing.T) {
 				numQubits: 3,
 			},
 			want: &Gate{
-				General: cblas128.General{
+				Matrix: Matrix{
 					Rows:   8,
 					Cols:   8,
 					Stride: 8,
@@ -135,7 +134,7 @@ func TestCreateH(t *testing.T) {
 				numQubits: 2,
 			},
 			want: &Gate{
-				General: cblas128.General{
+				Matrix: Matrix{
 					Rows:   4,
 					Cols:   4,
 					Stride: 4,
@@ -156,7 +155,7 @@ func TestCreateH(t *testing.T) {
 				numQubits: 3,
 			},
 			want: &Gate{
-				General: cblas128.General{
+				Matrix: Matrix{
 					Rows:   8,
 					Cols:   8,
 					Stride: 8,
@@ -189,7 +188,7 @@ func TestGate_Equals(t *testing.T) {
 		epsilon complex128
 	}
 	sameGate := Gate{
-		General: cblas128.General{
+		Matrix: Matrix{
 			Rows:   2,
 			Cols:   2,
 			Stride: 2,
@@ -216,7 +215,7 @@ func TestGate_Equals(t *testing.T) {
 		{
 			name: "Empty Gates are Equal",
 			fields: Gate{
-				General: cblas128.General{
+				Matrix: Matrix{
 					Rows:   0,
 					Cols:   0,
 					Stride: 0,
@@ -226,7 +225,7 @@ func TestGate_Equals(t *testing.T) {
 			},
 			args: args{
 				b: &Gate{
-					General: cblas128.General{
+					Matrix: Matrix{
 						Rows:   0,
 						Cols:   0,
 						Stride: 0,
@@ -242,7 +241,7 @@ func TestGate_Equals(t *testing.T) {
 		{
 			name: "Name Difference",
 			fields: Gate{
-				General: cblas128.General{
+				Matrix: Matrix{
 					Rows:   2,
 					Cols:   2,
 					Stride: 2,
@@ -252,7 +251,7 @@ func TestGate_Equals(t *testing.T) {
 			},
 			args: args{
 				b: &Gate{
-					General: cblas128.General{
+					Matrix: Matrix{
 						Rows:   2,
 						Cols:   2,
 						Stride: 2,
@@ -267,7 +266,7 @@ func TestGate_Equals(t *testing.T) {
 		{
 			name: "Different row count",
 			fields: Gate{
-				General: cblas128.General{
+				Matrix: Matrix{
 					Rows:   2,
 					Cols:   1,
 					Stride: 1,
@@ -277,7 +276,7 @@ func TestGate_Equals(t *testing.T) {
 			},
 			args: args{
 				b: &Gate{
-					General: cblas128.General{
+					Matrix: Matrix{
 						Rows:   1,
 						Cols:   1,
 						Stride: 1,
@@ -292,7 +291,7 @@ func TestGate_Equals(t *testing.T) {
 		{
 			name: "Different col count",
 			fields: Gate{
-				General: cblas128.General{
+				Matrix: Matrix{
 					Rows:   2,
 					Cols:   4,
 					Stride: 4,
@@ -302,7 +301,7 @@ func TestGate_Equals(t *testing.T) {
 			},
 			args: args{
 				b: &Gate{
-					General: cblas128.General{
+					Matrix: Matrix{
 						Rows:   2,
 						Cols:   3,
 						Stride: 4,
@@ -317,7 +316,7 @@ func TestGate_Equals(t *testing.T) {
 		{
 			name: "Different stride",
 			fields: Gate{
-				General: cblas128.General{
+				Matrix: Matrix{
 					Rows:   2,
 					Cols:   2,
 					Stride: 2,
@@ -327,7 +326,7 @@ func TestGate_Equals(t *testing.T) {
 			},
 			args: args{
 				b: &Gate{
-					General: cblas128.General{
+					Matrix: Matrix{
 						Rows:   2,
 						Cols:   2,
 						Stride: 3,
@@ -342,7 +341,7 @@ func TestGate_Equals(t *testing.T) {
 		{
 			name: "Different data length",
 			fields: Gate{
-				General: cblas128.General{
+				Matrix: Matrix{
 					Rows:   2,
 					Cols:   2,
 					Stride: 2,
@@ -352,7 +351,7 @@ func TestGate_Equals(t *testing.T) {
 			},
 			args: args{
 				b: &Gate{
-					General: cblas128.General{
+					Matrix: Matrix{
 						Rows:   2,
 						Cols:   2,
 						Stride: 2,
@@ -367,7 +366,7 @@ func TestGate_Equals(t *testing.T) {
 		{
 			name: "Difference in Real > Epsilon -> Not Equal",
 			fields: Gate{
-				General: cblas128.General{
+				Matrix: Matrix{
 					Rows:   2,
 					Cols:   2,
 					Stride: 2,
@@ -377,7 +376,7 @@ func TestGate_Equals(t *testing.T) {
 			},
 			args: args{
 				b: &Gate{
-					General: cblas128.General{
+					Matrix: Matrix{
 						Rows:   2,
 						Cols:   2,
 						Stride: 2,
@@ -392,7 +391,7 @@ func TestGate_Equals(t *testing.T) {
 		{
 			name: "Difference in Imaginary > Epsilon -> Not Equal",
 			fields: Gate{
-				General: cblas128.General{
+				Matrix: Matrix{
 					Rows:   2,
 					Cols:   2,
 					Stride: 2,
@@ -402,7 +401,7 @@ func TestGate_Equals(t *testing.T) {
 			},
 			args: args{
 				b: &Gate{
-					General: cblas128.General{
+					Matrix: Matrix{
 						Rows:   2,
 						Cols:   2,
 						Stride: 2,
@@ -417,7 +416,7 @@ func TestGate_Equals(t *testing.T) {
 		{
 			name: "Difference in Real < Epsilon -> Equal",
 			fields: Gate{
-				General: cblas128.General{
+				Matrix: Matrix{
 					Rows:   2,
 					Cols:   2,
 					Stride: 2,
@@ -427,7 +426,7 @@ func TestGate_Equals(t *testing.T) {
 			},
 			args: args{
 				b: &Gate{
-					General: cblas128.General{
+					Matrix: Matrix{
 						Rows:   2,
 						Cols:   2,
 						Stride: 2,
@@ -442,7 +441,7 @@ func TestGate_Equals(t *testing.T) {
 		{
 			name: "Difference in Imaginary < Epsilon -> Equal",
 			fields: Gate{
-				General: cblas128.General{
+				Matrix: Matrix{
 					Rows:   2,
 					Cols:   2,
 					Stride: 2,
@@ -452,7 +451,7 @@ func TestGate_Equals(t *testing.T) {
 			},
 			args: args{
 				b: &Gate{
-					General: cblas128.General{
+					Matrix: Matrix{
 						Rows:   2,
 						Cols:   2,
 						Stride: 2,
@@ -491,7 +490,7 @@ func Test_createX(t *testing.T) {
 				numQubits: 1,
 			},
 			want: &Gate{
-				General: cblas128.General{
+				Matrix: Matrix{
 					Rows:   2,
 					Cols:   2,
 					Stride: 2,
@@ -507,7 +506,7 @@ func Test_createX(t *testing.T) {
 				numQubits: 2,
 			},
 			want: &Gate{
-				General: cblas128.General{
+				Matrix: Matrix{
 					Rows:   4,
 					Cols:   4,
 					Stride: 4,
@@ -528,7 +527,7 @@ func Test_createX(t *testing.T) {
 				numQubits: 2,
 			},
 			want: &Gate{
-				General: cblas128.General{
+				Matrix: Matrix{
 					Rows:   4,
 					Cols:   4,
 					Stride: 4,
@@ -571,7 +570,7 @@ func Test_createCX(t *testing.T) {
 				numQubits: 2,
 			},
 			want: &Gate{
-				General: cblas128.General{
+				Matrix: Matrix{
 					Rows:   4,
 					Cols:   4,
 					Stride: 4,
@@ -593,7 +592,7 @@ func Test_createCX(t *testing.T) {
 				numQubits: 2,
 			},
 			want: &Gate{
-				General: cblas128.General{
+				Matrix: Matrix{
 					Rows:   4,
 					Cols:   4,
 					Stride: 4,
@@ -615,7 +614,7 @@ func Test_createCX(t *testing.T) {
 				numQubits: 4,
 			},
 			want: &Gate{
-				General: cblas128.General{
+				Matrix: Matrix{
 					Rows:   16,
 					Cols:   16,
 					Stride: 16,
@@ -668,8 +667,8 @@ func TestCombine(t *testing.T) {
 				matrices: []Gate{*createH([]int{0}, 1), *createH([]int{0}, 1)},
 			},
 			want: &Gate{
-				General: I,
-				name:    WIRE,
+				Matrix: I,
+				name:   WIRE,
 			},
 		},
 		{
@@ -679,7 +678,7 @@ func TestCombine(t *testing.T) {
 				matrices: []Gate{*createH([]int{0}, 2), *createCX(0, 1, 2)},
 			},
 			want: &Gate{
-				General: cblas128.General{
+				Matrix: Matrix{
 					Rows:   4,
 					Cols:   4,
 					Stride: 4,
@@ -701,7 +700,7 @@ func TestCombine(t *testing.T) {
 				matrices: []Gate{*createCX(0, 1, 2), *createH([]int{0}, 2)},
 			},
 			want: &Gate{
-				General: cblas128.General{
+				Matrix: Matrix{
 					Rows:   4,
 					Cols:   4,
 					Stride: 4,

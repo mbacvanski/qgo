@@ -1,7 +1,6 @@
 package main
 
 import (
-	"gonum.org/v1/gonum/blas/cblas128"
 	"math"
 	"sort"
 )
@@ -20,82 +19,82 @@ func (g *Gate) Name() string {
 }
 
 type Gate struct {
-	cblas128.General
+	Matrix
 	name GateName
 }
 
 var (
 	// UTILITY MATRICES
 
-	ZeroKet = cblas128.General{ // Ket of 0 = |0>
+	ZeroKet = NewKet(Matrix{ // Ket of 0 = |0>
 		Rows:   2,
 		Cols:   1,
 		Stride: 1,
 		Data:   []complex128{1, 0},
-	}
+	})
 
-	ZeroBra = cblas128.General{ // Bra of 0 = <0|
+	ZeroBra = NewBra(Matrix{ // Bra of 0 = <0|
 		Rows:   1,
 		Cols:   2,
 		Stride: 2,
 		Data:   []complex128{1, 0},
-	}
+	})
 
-	OneKet = cblas128.General{ // Ket of 1 = |1>
+	OneKet = NewKet(Matrix{ // Ket of 1 = |1>
 		Rows:   2,
 		Cols:   1,
 		Stride: 1,
 		Data:   []complex128{0, 1},
-	}
+	})
 
-	OneBra = cblas128.General{ // Bra of 1 = <1|
+	OneBra = NewBra(Matrix{ // Bra of 1 = <1|
 		Rows:   1,
 		Cols:   2,
 		Stride: 2,
 		Data:   []complex128{0, 1},
-	}
+	})
 
-	HPlusKet = cblas128.General{ // Ket of hadamard plus state = |+>
+	HPlusKet = NewKet(Matrix{ // Ket of hadamard plus state = |+>
 		Rows:   2,
 		Cols:   1,
 		Stride: 1,
 		Data:   []complex128{1 / math.Sqrt2, 1 / math.Sqrt2},
-	}
+	})
 
-	HMinusKet = cblas128.General{ // Ket of hadamard minus state = |->
+	HMinusKet = NewKet(Matrix{ // Ket of hadamard minus state = |->
 		Rows:   2,
 		Cols:   1,
 		Stride: 1,
 		Data:   []complex128{1 / math.Sqrt2, -1 / math.Sqrt2},
-	}
+	})
 
-	I = cblas128.General{ // Identity Matrix
+	I = Matrix(Matrix{ // Identity Matrix
 		Rows:   2,
 		Cols:   2,
 		Stride: 2,
 		Data:   []complex128{1, 0, 0, 1},
-	}
+	})
 
-	H = cblas128.General{ // Hadamard Matrix
+	H = Matrix(Matrix{ // Hadamard Matrix
 		Rows:   2,
 		Cols:   2,
 		Stride: 2,
 		Data:   []complex128{1 / math.Sqrt2, 1 / math.Sqrt2, 1 / math.Sqrt2, -1 / math.Sqrt2},
-	}
+	})
 
-	X = cblas128.General{ // Pauli-X Matrix
+	X = Matrix(Matrix{ // Pauli-X Matrix
 		Rows:   2,
 		Cols:   2,
 		Stride: 2,
 		Data:   []complex128{0, 1, 1, 0},
-	}
+	})
 )
 
 // Creates a multi-qubit Hadamard gate across the qubits specified here
 func createH(qubits []int, numQubits int) *Gate {
 	sort.Ints(qubits)
 
-	mat := cblas128.General{
+	mat := Matrix{
 		Rows:   1,
 		Cols:   1,
 		Stride: 1,
@@ -116,22 +115,22 @@ func createH(qubits []int, numQubits int) *Gate {
 	}
 
 	return &Gate{
-		General: mat,
-		name:    HADAMARD,
+		Matrix: mat,
+		name:   HADAMARD,
 	}
 }
 
 // Creates a single Pauli-X gate operating on the given qubit.
 // Will not fail if given multiple qubits to apply X gate on.
 func createX(qubit, numQubits int) *Gate {
-	var mat cblas128.General
-	if qubit == 0 {
-		mat = X
-	} else {
-		mat = I
+	mat := Matrix{
+		Rows:   1,
+		Cols:   1,
+		Stride: 1,
+		Data:   []complex128{1},
 	}
 
-	for i := 1; i < numQubits; i++ {
+	for i := 0; i < numQubits; i++ {
 		if i == qubit {
 			mat = *kronecker(mat, X)
 		} else {
@@ -140,8 +139,8 @@ func createX(qubit, numQubits int) *Gate {
 	}
 
 	return &Gate{
-		General: mat,
-		name:    PAULIX,
+		Matrix: mat,
+		name:   PAULIX,
 	}
 }
 
@@ -149,13 +148,13 @@ func createX(qubit, numQubits int) *Gate {
 // the qubit that acts as the target, and the total number of qubits.
 // Reference: http://www.sakkaris.com/tutorials/quantum_control_gates.html
 func createCX(control, target, numQubits int) *Gate {
-	controlMatrix := cblas128.General{
+	controlMatrix := Matrix{
 		Rows:   1,
 		Cols:   1,
 		Stride: 1,
 		Data:   []complex128{1},
 	}
-	targetMatrix := cblas128.General{
+	targetMatrix := Matrix{
 		Rows:   1,
 		Cols:   1,
 		Stride: 1,
@@ -166,8 +165,8 @@ func createCX(control, target, numQubits int) *Gate {
 	// If the control qubit is |1>, apply X to the target qubit
 	for i := 0; i < numQubits; i++ {
 		if i == control {
-			controlMatrix = *kronecker(controlMatrix, *mul(&ZeroKet, &ZeroBra))
-			targetMatrix = *kronecker(targetMatrix, *mul(&OneKet, &OneBra))
+			controlMatrix = *kronecker(controlMatrix, *mul((*Matrix)(&ZeroKet), (*Matrix)(&ZeroBra)))
+			targetMatrix = *kronecker(targetMatrix, *mul((*Matrix)(&OneKet), (*Matrix)(&OneBra)))
 		} else if i == target {
 			controlMatrix = *kronecker(controlMatrix, I)
 			targetMatrix = *kronecker(targetMatrix, X)
@@ -179,20 +178,20 @@ func createCX(control, target, numQubits int) *Gate {
 
 	combinedMatrix := add(&controlMatrix, &targetMatrix)
 	return &Gate{
-		General: *combinedMatrix,
-		name:    CX,
+		Matrix: *combinedMatrix,
+		name:   CX,
 	}
 }
 
 // Combines a set of gates into one using matrix multiplication
 func Combine(name GateName, matrices ...Gate) *Gate {
-	outMatrix := matrices[len(matrices)-1].General
+	outMatrix := matrices[len(matrices)-1].Matrix
 	for i := len(matrices) - 2; i >= 0; i-- {
-		outMatrix = *mul(&outMatrix, &matrices[i].General)
+		outMatrix = *mul(&outMatrix, &matrices[i].Matrix)
 	}
 	return &Gate{
-		General: outMatrix,
-		name:    name,
+		Matrix: outMatrix,
+		name:   name,
 	}
 }
 
@@ -204,5 +203,5 @@ func (g *Gate) Equals(b *Gate, epsilon complex128) bool {
 	if g.name != b.name {
 		return false
 	}
-	return equal(g.General, b.General, epsilon)
+	return equal(g.Matrix, b.Matrix, epsilon)
 }
