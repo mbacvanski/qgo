@@ -14,7 +14,7 @@ type RowVec Matrix
 type Bra RowVec
 
 // Coerces a matrix into column vector format
-func NewColumnVec(mat Matrix) ColVec {
+func NewColVec(mat Matrix) ColVec {
 	return ColVec{
 		Rows:   mat.Rows * mat.Cols,
 		Cols:   1,
@@ -28,8 +28,8 @@ func (c *ColVec) Size() int {
 }
 
 // Is the given matrix a column vector?
-func (m *Matrix) IsColumnVec() bool {
-	return m.Cols == 1
+func (a *Matrix) IsColumnVec() bool {
+	return a.Cols == 1
 }
 
 // Coerces a matrix into Ket format
@@ -66,8 +66,8 @@ func NewRowVec(mat Matrix) RowVec {
 }
 
 // Is the given matrix a row vector?
-func (m *Matrix) IsRowVec() bool {
-	return m.Rows == 1
+func (a *Matrix) IsRowVec() bool {
+	return a.Rows == 1
 }
 
 // Coerces a matrix into Bra format
@@ -82,30 +82,30 @@ func NewBra(mat Matrix) Bra {
 }
 
 // Is the given row vector a bra?
-func (v *ColVec) IsBra() bool {
-	return v.Rows == 2
+func (c *ColVec) IsBra() bool {
+	return c.Rows == 2
 }
 
 // Computes the dot product of a matrix with another
-func (a *ColVec) Dotp(b ColVec) complex128 {
+func (c *ColVec) Dotp(b ColVec) complex128 {
 	matA := cblas128.Vector{
-		N:    a.Rows * a.Cols,
-		Inc:  a.Stride / a.Cols,
-		Data: a.Data,
+		N:    c.Rows * c.Cols,
+		Inc:  c.Stride / c.Cols,
+		Data: c.Data,
 	}
 
 	matB := cblas128.Vector{
 		N:    b.Rows * b.Cols,
-		Inc:  a.Stride / a.Cols,
+		Inc:  c.Stride / c.Cols,
 		Data: b.Data,
 	}
 
 	return cblas128.Dotc(matA, matB)
 }
 
-// Creates the Kronecker product of matrices A and B
+// Creates the Kronecker product of matrices M and B
 // Returns a reference to the matrix containing the result
-func kronecker(a, b Matrix) *Matrix {
+func (a Matrix) Kronecker(b Matrix) *Matrix {
 	ar, ac := a.Rows, a.Cols
 	br, bc := b.Rows, b.Cols
 	out := Matrix{
@@ -135,22 +135,22 @@ func kronecker(a, b Matrix) *Matrix {
 	return &out
 }
 
-// Does standard matrix multiplication of A and B
+// Does standard matrix multiplication of A and B.
 // Returns a reference to the matrix containing the result
-func mul(a, b *Matrix) *Matrix {
+func (a Matrix) Mul(b Matrix) *Matrix {
 	var c = Matrix{
 		Rows:   a.Rows,
 		Cols:   b.Cols,
 		Stride: b.Cols,
 		Data:   make([]complex128, a.Rows*b.Cols),
 	}
-	cblas128.Gemm(blas.NoTrans, blas.NoTrans, 1, cblas128.General(*a), cblas128.General(*b), 0, cblas128.General(c))
+	cblas128.Gemm(blas.NoTrans, blas.NoTrans, 1, cblas128.General(a), cblas128.General(b), 0, cblas128.General(c))
 	return &c
 }
 
-func add(a, b *Matrix) *Matrix {
+func (a Matrix) Add(b Matrix) *Matrix {
 	if a.Rows != b.Rows || a.Cols != b.Cols || a.Stride != b.Stride {
-		panic("Cannot add matrices of differing dimensions")
+		panic("Cannot Add matrices of differing dimensions")
 	}
 
 	out := Matrix{
@@ -215,24 +215,24 @@ func FormatMat(X Matrix) string {
 }
 
 // Apply Kronecker multiplication to the list of kets, in the order
-func KronKets(qubitStates []Ket) Matrix {
-	input := Matrix{
+func KronKets(kets []Ket) ColVec {
+	vec := Matrix{
 		Rows:   1,
 		Cols:   1,
 		Stride: 1,
 		Data:   []complex128{1},
 	}
-	for i := 0; i < len(qubitStates); i++ {
-		input = *kronecker(input, Matrix(qubitStates[i]))
+	for i := 0; i < len(kets); i++ {
+		vec = *vec.Kronecker(Matrix(kets[i]))
 	}
-	return input
+	return NewColVec(vec)
 }
 
 // Determines equality between two Matrix matrices, using epsilon a complex number.
-// Two matrices are equal if their dimensions are equal and their values are equal,
-// given a complex epsilon. Two complex numbers a+bi and c+di are considered to be equal
+// Two matrices are Equals if their dimensions are Equals and their values are Equals,
+// given a complex epsilon. Two complex numbers a+bi and c+di are considered to be Equals
 // when abs(a-c) < real(epsilon) and abs(b-d) < imag(epsilon).
-func equal(a, b Matrix, epsilon complex128) bool {
+func (a Matrix) Equals(b Matrix, epsilon complex128) bool {
 	if a.Rows != b.Rows || a.Cols != b.Cols || a.Stride != b.Stride {
 		return false
 	}

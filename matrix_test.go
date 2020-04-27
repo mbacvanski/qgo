@@ -81,7 +81,7 @@ func Test_kronecker(t *testing.T) {
 	tests := []struct {
 		name string
 		args args
-		want *Matrix
+		want Matrix
 	}{
 		{
 			name: "1x1 Kronecker",
@@ -99,7 +99,7 @@ func Test_kronecker(t *testing.T) {
 					Data:   []complex128{3},
 				},
 			},
-			want: &Matrix{
+			want: Matrix{
 				Rows:   1,
 				Cols:   1,
 				Stride: 1,
@@ -122,7 +122,7 @@ func Test_kronecker(t *testing.T) {
 					Data:   []complex128{3 + 2i, 1 + 5i, 2 + 1i, 7},
 				},
 			},
-			want: &Matrix{
+			want: Matrix{
 				Rows:   4,
 				Cols:   4,
 				Stride: 4,
@@ -148,7 +148,7 @@ func Test_kronecker(t *testing.T) {
 					Data:   []complex128{1i, 0},
 				},
 			},
-			want: &Matrix{
+			want: Matrix{
 				Rows:   4,
 				Cols:   1,
 				Stride: 1,
@@ -171,7 +171,7 @@ func Test_kronecker(t *testing.T) {
 					Data:   []complex128{1, 0, 0, 1},
 				},
 			},
-			want: &Matrix{
+			want: Matrix{
 				Rows:   4,
 				Cols:   4,
 				Stride: 4,
@@ -194,7 +194,7 @@ func Test_kronecker(t *testing.T) {
 					Data:   []complex128{1, 0, 0, 1},
 				},
 			},
-			want: &Matrix{
+			want: Matrix{
 				Rows:   4,
 				Cols:   4,
 				Stride: 4,
@@ -209,8 +209,8 @@ func Test_kronecker(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := kronecker(tt.args.a, tt.args.b); !equal(*got, *tt.want, 0.00000001+0.00000001i) {
-				t.Errorf("kronecker() = %v, want %v", got, tt.want)
+			if got := tt.args.a.Kronecker(tt.args.b); !got.Equals(tt.want, 0.00000001+0.00000001i) {
+				t.Errorf("Kronecker() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -298,8 +298,8 @@ func Test_mul(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := mul(tt.args.a, tt.args.b); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("mul() = %v, want %v", got, tt.want)
+			if got := tt.args.a.Mul(*tt.args.b); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Mul() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -307,31 +307,31 @@ func Test_mul(t *testing.T) {
 
 func Test_add(t *testing.T) {
 	type args struct {
-		a *Matrix
-		b *Matrix
+		a Matrix
+		b Matrix
 	}
 	tests := []struct {
 		name string
 		args args
-		want *Matrix
+		want Matrix
 	}{
 		{
 			name: "Add 2x2",
 			args: args{
-				a: &Matrix{
+				a: Matrix{
 					Rows:   2,
 					Cols:   2,
 					Stride: 2,
 					Data:   []complex128{1, 2, 3, 4},
 				},
-				b: &Matrix{
+				b: Matrix{
 					Rows:   2,
 					Cols:   2,
 					Stride: 2,
 					Data:   []complex128{5, 6, 7, 8},
 				},
 			},
-			want: &Matrix{
+			want: Matrix{
 				Rows:   2,
 				Cols:   2,
 				Stride: 2,
@@ -341,8 +341,8 @@ func Test_add(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := add(tt.args.a, tt.args.b); !equal(*got, *tt.want, StdEpsilon) {
-				t.Errorf("add() = %v, want %v", got, tt.want)
+			if got := tt.args.a.Add(tt.args.b); !got.Equals(tt.want, StdEpsilon) {
+				t.Errorf("Add() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -352,12 +352,12 @@ func Test_add(t *testing.T) {
 		}
 	}()
 
-	add(&Matrix{
+	Matrix{
 		Rows:   2,
 		Cols:   2,
 		Stride: 2,
 		Data:   []complex128{1, 2, 3, 4},
-	}, &Matrix{
+	}.Add(Matrix{
 		Rows:   1,
 		Cols:   5,
 		Stride: 3,
@@ -411,8 +411,8 @@ func TestNewColumnVec(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := NewColumnVec(tt.args.mat); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("NewColumnVec() = %v, want %v", got, tt.want)
+			if got := NewColVec(tt.args.mat); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("NewColVec() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -752,22 +752,189 @@ func TestColVec_Size(t *testing.T) {
 	}
 }
 
-// TODO
 func TestKronKets(t *testing.T) {
 	type args struct {
-		qubitStates []Ket
+		kets []Ket
 	}
 	tests := []struct {
 		name string
 		args args
-		want Matrix
+		want ColVec
 	}{
-		// TODO: Add test cases.
+		{
+			name: "Kronecker product of single ket",
+			args: args{kets: []Ket{OneKet}},
+			want: ColVec(OneKet),
+		},
+		{
+			name: "Kronecker product of five kets",
+			args: args{[]Ket{OneKet, ZeroKet, OneKet, OneKet, ZeroKet}},
+			want: ColVec{
+				Rows:   32,
+				Cols:   1,
+				Stride: 1,
+				Data: []complex128{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+					0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := KronKets(tt.args.qubitStates); !reflect.DeepEqual(got, tt.want) {
+			if got := KronKets(tt.args.kets); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("KronKets() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestColVec_Dotp(t *testing.T) {
+	type args struct {
+		b ColVec
+	}
+	tests := []struct {
+		name string
+		c    ColVec
+		args args
+		want complex128
+	}{
+		{
+			name: "Dot product of two single number matrices",
+			c: ColVec{
+				Rows:   1,
+				Cols:   1,
+				Stride: 1,
+				Data:   []complex128{42},
+			},
+			args: args{
+				b: ColVec{
+					Rows:   1,
+					Cols:   1,
+					Stride: 1,
+					Data:   []complex128{4},
+				},
+			},
+			want: 168,
+		},
+		{
+			name: "Dot product of two large vectors",
+			c: ColVec{
+				Rows:   9,
+				Cols:   1,
+				Stride: 1,
+				Data:   []complex128{1, 2, 3, 4, 5, 6, 7, 8, 9},
+			},
+			args: args{
+				b: ColVec{
+					Rows:   9,
+					Cols:   1,
+					Stride: 1,
+					Data:   []complex128{0, 9, 8, 7, 6, 5, 4, 3, 2},
+				},
+			},
+			want: 200,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.c.Dotp(tt.args.b); got != tt.want {
+				t.Errorf("Dotp() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestMatrix_Equals(t *testing.T) {
+	type args struct {
+		b       Matrix
+		epsilon complex128
+	}
+	tests := []struct {
+		name string
+		a    Matrix
+		args args
+		want bool
+	}{
+		{
+			name: "Matrices with different dimensions are not equal",
+			a: Matrix{
+				Rows:   4,
+				Cols:   2,
+				Stride: 2,
+				Data:   []complex128{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
+			},
+			args: args{
+				b: Matrix{
+					Rows:   2,
+					Cols:   3,
+					Stride: 3,
+					Data:   []complex128{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
+				},
+				epsilon: StdEpsilon,
+			},
+			want: false,
+		},
+		{
+			name: "Matrices with different length data are not equal",
+			a: Matrix{
+				Rows:   2,
+				Cols:   2,
+				Stride: 2,
+				Data:   []complex128{1, 2, 3, 4},
+			},
+			args: args{
+				b: Matrix{
+					Rows:   2,
+					Cols:   2,
+					Stride: 2,
+					Data:   []complex128{1, 2, 3, 4, 5},
+				},
+				epsilon: StdEpsilon,
+			},
+			want: false,
+		},
+		{
+			name: "Matrices with different data are not equal",
+			a: Matrix{
+				Rows:   2,
+				Cols:   2,
+				Stride: 2,
+				Data:   []complex128{1, 2, 3, 4},
+			},
+			args: args{
+				b: Matrix{
+					Rows:   2,
+					Cols:   2,
+					Stride: 2,
+					Data:   []complex128{1, 2, 4, 3},
+				},
+				epsilon: StdEpsilon,
+			},
+			want: false,
+		},
+		{
+			name: "Identical matrices are equal",
+			a: Matrix{
+				Rows:   3,
+				Cols:   3,
+				Stride: 3,
+				Data:   []complex128{1, 2, 3, 4, 5, 6, 7, 8, 9},
+			},
+			args: args{
+				b: Matrix{
+					Rows:   3,
+					Cols:   3,
+					Stride: 3,
+					Data:   []complex128{1, 2, 3, 4, 5, 6, 7, 8, 9},
+				},
+				epsilon: StdEpsilon,
+			},
+			want: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.a.Equals(tt.args.b, tt.args.epsilon); got != tt.want {
+				t.Errorf("Equals() = %v, want %v", got, tt.want)
 			}
 		})
 	}

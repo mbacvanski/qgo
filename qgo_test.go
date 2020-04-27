@@ -143,7 +143,7 @@ func TestQuantumCircuit_Compile(t *testing.T) {
 		}
 		expected := *createCX(0, 1, 2)
 		qc.Compile()
-		if !equal(qc.compiled.Matrix, expected.Matrix, StdEpsilon) {
+		if !qc.compiled.Matrix.Equals(expected.Matrix, StdEpsilon) {
 			t.Errorf("Compiling X gate makes circuit %v, expected %v", qc.compiled, expected)
 		}
 		if !qc.compileValid {
@@ -168,7 +168,7 @@ func TestQuantumCircuit_Compile(t *testing.T) {
 			},
 		}
 		qc.Compile()
-		if !equal(qc.compiled.Matrix, expectedMatrix, StdEpsilon) {
+		if !qc.compiled.Matrix.Equals(expectedMatrix, StdEpsilon) {
 			t.Errorf("Compiling H(0) CX gate makes circuit %v, expected %v", qc.compiled.Matrix, expectedMatrix)
 		}
 		if !qc.compileValid {
@@ -267,7 +267,7 @@ func TestQuantumCircuit_Exec(t *testing.T) {
 				gates:     tt.fields.gates,
 				compiled:  tt.fields.compiled,
 			}
-			if got := qc.Exec(tt.args.register); !equal(Matrix(got.out), Matrix(tt.want.out), StdEpsilon) {
+			if got := qc.Exec(tt.args.register); !Matrix(got.out).Equals(Matrix(tt.want.out), StdEpsilon) {
 				t.Errorf("Exec() = %v, want %v", got, tt.want)
 			}
 		})
@@ -378,7 +378,7 @@ func TestQuantumCircuitExecution_MeasureProbability(t *testing.T) {
 			name: "Measure H+ state across two qubits",
 			fields: fields{
 				in:       []Ket{ZeroKet, ZeroKet},
-				register: NewColumnVec(KronKets([]Ket{ZeroKet, ZeroKet})),
+				register: KronKets([]Ket{ZeroKet, ZeroKet}),
 				out: ColVec{
 					Rows:   4,
 					Cols:   1,

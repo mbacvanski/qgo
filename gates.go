@@ -104,13 +104,13 @@ func createH(qubits []int, numQubits int) *Gate {
 	qubitCount := 0
 	for i := 0; i < numQubits; i++ {
 		if i == qubits[qubitCount] {
-			mat = *kronecker(mat, H)
+			mat = *mat.Kronecker(H)
 
 			if qubitCount < len(qubits)-1 {
 				qubitCount++
 			}
 		} else {
-			mat = *kronecker(mat, I)
+			mat = *mat.Kronecker(I)
 		}
 	}
 
@@ -132,9 +132,9 @@ func createX(qubit, numQubits int) *Gate {
 
 	for i := 0; i < numQubits; i++ {
 		if i == qubit {
-			mat = *kronecker(mat, X)
+			mat = *mat.Kronecker(X)
 		} else {
-			mat = *kronecker(mat, I)
+			mat = *mat.Kronecker(I)
 		}
 	}
 
@@ -165,18 +165,18 @@ func createCX(control, target, numQubits int) *Gate {
 	// If the control qubit is |1>, apply X to the target qubit
 	for i := 0; i < numQubits; i++ {
 		if i == control {
-			controlMatrix = *kronecker(controlMatrix, *mul((*Matrix)(&ZeroKet), (*Matrix)(&ZeroBra)))
-			targetMatrix = *kronecker(targetMatrix, *mul((*Matrix)(&OneKet), (*Matrix)(&OneBra)))
+			controlMatrix = *controlMatrix.Kronecker(*(Matrix)(ZeroKet).Mul((Matrix)(ZeroBra)))
+			targetMatrix = *targetMatrix.Kronecker(*(Matrix)(OneKet).Mul((Matrix)(OneBra)))
 		} else if i == target {
-			controlMatrix = *kronecker(controlMatrix, I)
-			targetMatrix = *kronecker(targetMatrix, X)
+			controlMatrix = *controlMatrix.Kronecker(I)
+			targetMatrix = *targetMatrix.Kronecker(X)
 		} else {
-			controlMatrix = *kronecker(controlMatrix, I)
-			targetMatrix = *kronecker(targetMatrix, I)
+			controlMatrix = *controlMatrix.Kronecker(I)
+			targetMatrix = *targetMatrix.Kronecker(I)
 		}
 	}
 
-	combinedMatrix := add(&controlMatrix, &targetMatrix)
+	combinedMatrix := controlMatrix.Add(targetMatrix)
 	return &Gate{
 		Matrix: *combinedMatrix,
 		name:   CX,
@@ -187,7 +187,7 @@ func createCX(control, target, numQubits int) *Gate {
 func Combine(name GateName, matrices ...Gate) *Gate {
 	outMatrix := matrices[len(matrices)-1].Matrix
 	for i := len(matrices) - 2; i >= 0; i-- {
-		outMatrix = *mul(&outMatrix, &matrices[i].Matrix)
+		outMatrix = *outMatrix.Mul(matrices[i].Matrix)
 	}
 	return &Gate{
 		Matrix: outMatrix,
@@ -196,12 +196,12 @@ func Combine(name GateName, matrices ...Gate) *Gate {
 }
 
 // Determines equality between two gates, using epsilon as a complex number.
-// Two gates are equal if their names are equal and their matrix representations
-// are also equal, given a complex epsilon. Two complex numbers a+bi and c+di
-// are considered to be equal if abs(a-c) < real(epsilon) and abs(b-d) < imag(epsilon).
+// Two gates are Equals if their names are Equals and their matrix representations
+// are also Equals, given a complex epsilon. Two complex numbers a+bi and c+di
+// are considered to be Equals if abs(a-c) < real(epsilon) and abs(b-d) < imag(epsilon).
 func (g *Gate) Equals(b *Gate, epsilon complex128) bool {
 	if g.name != b.name {
 		return false
 	}
-	return equal(g.Matrix, b.Matrix, epsilon)
+	return g.Matrix.Equals(b.Matrix, epsilon)
 }

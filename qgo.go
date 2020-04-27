@@ -26,8 +26,8 @@ func (qce *QuantumCircuitExecution) MeasureProbability(basis []Ket) float64 {
 		panic("Not enough basis vectors for measurement basis")
 	}
 
-	// Assemble basis vector by kronecker products
-	basisVec := NewColumnVec(KronKets(basis))
+	// Assemble basis vector by Kronecker products
+	basisVec := KronKets(basis)
 
 	// Magnitude of projection of output onto basis
 	magnitude := qce.out.Dotp(basisVec) / basisVec.Dotp(basisVec)
@@ -76,7 +76,7 @@ func (qc *QuantumCircuit) Exec(qubitStates []Ket) *QuantumCircuitExecution {
 
 	return &QuantumCircuitExecution{
 		in:       qubitStates,
-		register: NewColumnVec(input),
-		out:      NewColumnVec(*mul(&qc.compiled.Matrix, &input)),
+		register: input,
+		out:      NewColVec(*qc.compiled.Matrix.Mul((Matrix)(input))),
 	}
 }
