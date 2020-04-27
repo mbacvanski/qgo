@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"gonum.org/v1/gonum/blas"
 	"gonum.org/v1/gonum/blas/cblas128"
+	"math"
 )
 
 type Matrix cblas128.General
@@ -20,6 +21,10 @@ func NewColumnVec(mat Matrix) ColVec {
 		Stride: 1,
 		Data:   mat.Data,
 	}
+}
+
+func (c *ColVec) Size() int {
+	return c.Rows
 }
 
 // Is the given matrix a column vector?
@@ -79,6 +84,23 @@ func NewBra(mat Matrix) Bra {
 // Is the given row vector a bra?
 func (v *ColVec) IsBra() bool {
 	return v.Rows == 2
+}
+
+// Computes the dot product of a matrix with another
+func (a *ColVec) Dotp(b ColVec) complex128 {
+	matA := cblas128.Vector{
+		N:    a.Rows * a.Cols,
+		Inc:  a.Stride / a.Cols,
+		Data: a.Data,
+	}
+
+	matB := cblas128.Vector{
+		N:    b.Rows * b.Cols,
+		Inc:  a.Stride / a.Cols,
+		Data: b.Data,
+	}
+
+	return cblas128.Dotc(matA, matB)
 }
 
 // Creates the Kronecker product of matrices A and B
@@ -190,4 +212,40 @@ func FormatMat(X Matrix) string {
 	}
 	str += "]"
 	return str
+}
+
+// Apply Kronecker multiplication to the list of kets, in the order
+func KronKets(qubitStates []Ket) Matrix {
+	input := Matrix{
+		Rows:   1,
+		Cols:   1,
+		Stride: 1,
+		Data:   []complex128{1},
+	}
+	for i := 0; i < len(qubitStates); i++ {
+		input = *kronecker(input, Matrix(qubitStates[i]))
+	}
+	return input
+}
+
+// Determines equality between two Matrix matrices, using epsilon a complex number.
+// Two matrices are equal if their dimensions are equal and their values are equal,
+// given a complex epsilon. Two complex numbers a+bi and c+di are considered to be equal
+// when abs(a-c) < real(epsilon) and abs(b-d) < imag(epsilon).
+func equal(a, b Matrix, epsilon complex128) bool {
+	if a.Rows != b.Rows || a.Cols != b.Cols || a.Stride != b.Stride {
+		return false
+	}
+	if len(a.Data) != len(b.Data) {
+		return false
+	}
+
+	for i := range a.Data {
+		if math.Abs(real(a.Data[i])-real(b.Data[i])) > real(epsilon) ||
+			math.Abs(imag(a.Data[i])-imag(b.Data[i])) > imag(epsilon) {
+			return false
+		}
+	}
+
+	return true
 }

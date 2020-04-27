@@ -725,3 +725,50 @@ func TestRowVec_IsKet(t *testing.T) {
 		})
 	}
 }
+
+func TestColVec_Size(t *testing.T) {
+	tests := []struct {
+		name string
+		c    ColVec
+		want int
+	}{
+		{
+			name: "Size of col vec",
+			c: ColVec{
+				Rows:   4,
+				Cols:   1,
+				Stride: 1,
+				Data:   []complex128{1, 2, 3, 4},
+			},
+			want: 4,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.c.Size(); got != tt.want {
+				t.Errorf("Size() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+// TODO
+func TestKronKets(t *testing.T) {
+	type args struct {
+		qubitStates []Ket
+	}
+	tests := []struct {
+		name string
+		args args
+		want Matrix
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := KronKets(tt.args.qubitStates); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("KronKets() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

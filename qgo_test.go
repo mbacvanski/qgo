@@ -2,8 +2,11 @@ package main
 
 import (
 	"fmt"
+	"math"
 	"testing"
 )
+
+const FloatEpsilon = 0.00000001
 
 func TestQuantumCircuit_H(t *testing.T) {
 	t.Run("Add H to circuit", func(t *testing.T) {
@@ -318,4 +321,115 @@ func TestQuantumCircuit_addGate(t *testing.T) {
 			t.Errorf("addGate() = %v, want %v", qc.gates, []Gate{*h, *cx})
 		}
 	})
+}
+
+func TestQuantumCircuitExecution_MeasureProbability(t *testing.T) {
+	type fields struct {
+		in       []Ket
+		register ColVec
+		out      ColVec
+	}
+	type args struct {
+		basis []Ket
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   float64
+	}{
+		{
+			name: "Measure same ket as output",
+			fields: fields{
+				in:       []Ket{OneKet},
+				register: ColVec(OneKet),
+				out:      ColVec(OneKet),
+			},
+			args: args{
+				basis: []Ket{OneKet},
+			},
+			want: 1,
+		},
+		{
+			name: "Measure orthogonal ket as output",
+			fields: fields{
+				in:       []Ket{OneKet},
+				register: ColVec(OneKet),
+				out:      ColVec(OneKet),
+			},
+			args: args{
+				basis: []Ket{ZeroKet},
+			},
+			want: 0,
+		},
+		{
+			name: "Measure H+ state in standard basis",
+			fields: fields{
+				in:       []Ket{HPlusKet},
+				register: ColVec(HPlusKet),
+				out:      ColVec(HPlusKet),
+			},
+			args: args{
+				basis: []Ket{OneKet},
+			},
+			want: 0.5,
+		},
+		{
+			name: "Measure H+ state across two qubits",
+			fields: fields{
+				in:       []Ket{ZeroKet, ZeroKet},
+				register: NewColumnVec(KronKets([]Ket{ZeroKet, ZeroKet})),
+				out: ColVec{
+					Rows:   4,
+					Cols:   1,
+					Stride: 1,
+					Data:   []complex128{0.5, 0.5, 0.5, 0.5},
+				},
+			},
+			args: args{
+				basis: []Ket{OneKet, ZeroKet},
+			},
+			want: 0.25,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			qce := &QuantumCircuitExecution{
+				in:       tt.fields.in,
+				register: tt.fields.register,
+				out:      tt.fields.out,
+			}
+			if got := qce.MeasureProbability(tt.args.basis); !floatEqual(got, tt.want, FloatEpsilon) {
+				t.Errorf("MeasureProbability() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+
+	t.Run("Panic on bad basis size", func(t *testing.T) {
+		qce := &QuantumCircuitExecution{
+			in: []Ket{OneKet, ZeroKet},
+			register: ColVec{
+				Rows:   4,
+				Cols:   1,
+				Stride: 1,
+				Data:   []complex128{0, 0, 1, 0},
+			},
+			out: ColVec{
+				Rows:   4,
+				Cols:   1,
+				Stride: 1,
+				Data:   []complex128{0, 0, 1, 0},
+			},
+		}
+		defer func() {
+			if r := recover(); r == nil {
+				t.Errorf("Does not panic on not enough qubits")
+			}
+		}()
+		qce.MeasureProbability([]Ket{OneKet})
+	})
+}
+
+func floatEqual(a, b, epsilon float64) bool {
+	return math.Abs(b-a) < epsilon
 }

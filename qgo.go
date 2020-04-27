@@ -18,21 +18,22 @@ type QuantumCircuitExecution struct {
 	out      ColVec
 }
 
-type QuantumMeasurement struct {
+// Measures the probability of reading out a certain vector
+func (qce *QuantumCircuitExecution) MeasureProbability(basis []Ket) float64 {
+	// Check dimensions of the measurement basis
+	// We need n basis vectors to measure a space of 2^n
+	if float64(len(basis)) != math.Log2(float64(qce.out.Size())) {
+		panic("Not enough basis vectors for measurement basis")
+	}
+
+	// Assemble basis vector by kronecker products
+	basisVec := NewColumnVec(KronKets(basis))
+
+	// Magnitude of projection of output onto basis
+	magnitude := qce.out.Dotp(basisVec) / basisVec.Dotp(basisVec)
+
+	return real(magnitude * magnitude)
 }
-
-//func (qce *QuantumCircuitExecution) MeasureProbabilities() *QuantumMeasurement {
-//
-//}
-
-//func (qce *QuantumCircuitExecution) MeasureProbability(basis []cblas128.Vector) float64 {
-//	// Check dimensions of the measurement basis
-//	if len(basis) != qce.out {
-//		panic("Not enough basis vectors for measurement basis")
-//	}
-//
-//
-//}
 
 func (qc *QuantumCircuit) addGate(g Gate) {
 	qc.compileValid = false
@@ -71,41 +72,11 @@ func (qc *QuantumCircuit) Exec(qubitStates []Ket) *QuantumCircuitExecution {
 		qc.Compile()
 	}
 
-	input := Matrix{
-		Rows:   1,
-		Cols:   1,
-		Stride: 1,
-		Data:   []complex128{1},
-	}
-	for i := 0; i < len(qubitStates); i++ {
-		input = *kronecker(input, Matrix(qubitStates[i]))
-	}
+	input := KronKets(qubitStates)
 
 	return &QuantumCircuitExecution{
 		in:       qubitStates,
 		register: NewColumnVec(input),
 		out:      NewColumnVec(*mul(&qc.compiled.Matrix, &input)),
 	}
-}
-
-// Determines equality between two cblas128.Matrix matrices, using epsilon a complex number.
-// Two matrices are equal if their dimensions are equal and their values are equal,
-// given a complex epsilon. Two complex numbers a+bi and c+di are considered to be equal
-// when abs(a-c) < real(epsilon) and abs(b-d) < imag(epsilon).
-func equal(a, b Matrix, epsilon complex128) bool {
-	if a.Rows != b.Rows || a.Cols != b.Cols || a.Stride != b.Stride {
-		return false
-	}
-	if len(a.Data) != len(b.Data) {
-		return false
-	}
-
-	for i := range a.Data {
-		if math.Abs(real(a.Data[i])-real(b.Data[i])) > real(epsilon) ||
-			math.Abs(imag(a.Data[i])-imag(b.Data[i])) > imag(epsilon) {
-			return false
-		}
-	}
-
-	return true
 }
