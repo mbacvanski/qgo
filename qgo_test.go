@@ -433,3 +433,88 @@ func TestQuantumCircuitExecution_MeasureProbability(t *testing.T) {
 func floatEqual(a, b, epsilon float64) bool {
 	return math.Abs(b-a) < epsilon
 }
+
+func floatsEqual(a, b []float64, epsilon float64) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i := range a {
+		if !floatEqual(a[i], b[i], epsilon) {
+			return false
+		}
+	}
+	return true
+}
+
+func TestQuantumCircuitExecution_MeasureProbabilities(t *testing.T) {
+	type fields struct {
+		in       []Ket
+		register ColVec
+		out      ColVec
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		want   []float64
+	}{
+		{
+			name: "Measure zero ket outcomes",
+			fields: fields{
+				in:       []Ket{ZeroKet},
+				register: ColVec(ZeroKet),
+				out:      ColVec(ZeroKet),
+			},
+			want: []float64{1, 0},
+		},
+		{
+			name: "Measure [0 0 1 0] as |10>",
+			fields: fields{
+				in: []Ket{ZeroKet, OneKet},
+				register: ColVec{
+					Rows:   4,
+					Cols:   1,
+					Stride: 1,
+					Data:   []complex128{0, 1, 0, 0},
+				},
+				out: ColVec{
+					Rows:   4,
+					Cols:   1,
+					Stride: 1,
+					Data:   []complex128{0, 0, 1, 0},
+				},
+			},
+			want: []float64{0, 0, 1, 0},
+		},
+		{
+			name: "Measure two qubit hadamard state",
+			fields: fields{
+				in: []Ket{ZeroKet, ZeroKet},
+				register: ColVec{
+					Rows:   4,
+					Cols:   1,
+					Stride: 1,
+					Data:   []complex128{1, 0, 0, 0},
+				},
+				out: ColVec{
+					Rows:   4,
+					Cols:   1,
+					Stride: 1,
+					Data:   []complex128{0.5, 0.5, 0.5, 0.5},
+				},
+			},
+			want: []float64{0.25, 0.25, 0.25, 0.25},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			qce := &QuantumCircuitExecution{
+				in:       tt.fields.in,
+				register: tt.fields.register,
+				out:      tt.fields.out,
+			}
+			if got := qce.MeasureProbabilities(); !floatsEqual(got, tt.want, FloatEpsilon) {
+				t.Errorf("MeasureProbabilities() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

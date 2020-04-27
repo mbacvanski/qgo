@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"math"
+	"strconv"
 )
 
 type QuantumCircuit struct {
@@ -16,6 +17,29 @@ type QuantumCircuitExecution struct {
 	in       []Ket
 	register ColVec
 	out      ColVec
+}
+
+// Computes the probabilites of measuring all outcomes in the standard Z bases
+func (qce *QuantumCircuitExecution) MeasureProbabilities() []float64 {
+	probabilities := make([]float64, qce.out.Size())
+
+	numQubits := int(math.Log2(float64(qce.out.Size())))
+
+	for i := 0; i < qce.out.Size(); i++ {
+		byteStr := fmt.Sprintf("%0"+strconv.Itoa(numQubits)+"v", strconv.FormatInt(int64(i), 2))
+		var basis []Ket
+		for _, c := range byteStr {
+			if c == '0' {
+				basis = append(basis, ZeroKet)
+			} else if c == '1' {
+				basis = append(basis, OneKet)
+			}
+		}
+
+		probabilities[i] = qce.MeasureProbability(basis)
+	}
+
+	return probabilities
 }
 
 // Measures the probability of reading out a certain vector
