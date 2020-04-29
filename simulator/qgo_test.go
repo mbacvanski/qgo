@@ -1,4 +1,4 @@
-package main
+package simulator
 
 import (
 	"fmt"
@@ -66,6 +66,36 @@ func TestQuantumCircuit_H(t *testing.T) {
 			}
 		}()
 		qc.H([]int{0, 1, 2})
+	})
+}
+
+func TestQuantumCircuit_X(t *testing.T) {
+	t.Run("Add X to single qubit circuit", func(t *testing.T) {
+		qc := &QuantumCircuit{
+			numQubits:    1,
+			gates:        []Gate{},
+			compileValid: false,
+			compiled:     Gate{},
+		}
+		qc.X(0)
+		expected := createX(0, 1)
+		if len(qc.gates) != 1 || !qc.gates[0].Equals(expected, StdEpsilon) {
+			t.Errorf("qc.gates = %v, expected %v", qc.gates, []Gate{*expected})
+		}
+	})
+
+	t.Run("Add X to one out of three qubits", func(t *testing.T) {
+		qc := &QuantumCircuit{
+			numQubits:    3,
+			gates:        []Gate{},
+			compileValid: false,
+			compiled:     Gate{},
+		}
+		qc.X(1)
+		expected := createX(1, 3)
+		if len(qc.gates) != 1 || !qc.gates[0].Equals(expected, StdEpsilon) {
+			t.Errorf("qc.gates = %v, expected %v", qc.gates, []Gate{*expected})
+		}
 	})
 }
 

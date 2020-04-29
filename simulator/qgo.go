@@ -1,4 +1,4 @@
-package main
+package simulator
 
 import (
 	"fmt"
@@ -17,6 +17,15 @@ type QuantumCircuitExecution struct {
 	in       []Ket
 	register ColVec
 	out      ColVec
+}
+
+func NewQuantumCircuit(numQubits int) QuantumCircuit {
+	return QuantumCircuit{
+		numQubits:    numQubits,
+		gates:        []Gate{},
+		compileValid: false,
+		compiled:     Gate{},
+	}
 }
 
 // Computes the probabilites of measuring all outcomes in the standard Z bases
@@ -77,6 +86,11 @@ func (qc *QuantumCircuit) H(hQubits []int) {
 // qubit indices that the gate should operate on.
 func (qc *QuantumCircuit) CX(control, target int) {
 	qc.addGate(*createCX(control, target, qc.numQubits))
+}
+
+// Adds a Pauli-X gate to the qubit
+func (qc *QuantumCircuit) X(qubit int) {
+	qc.addGate(*createX(qubit, qc.numQubits))
 }
 
 // Compiles all gates in the circuit into one compiled operation
