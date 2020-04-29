@@ -56,7 +56,7 @@ func (qce *QuantumCircuitExecution) MeasureProbability(basis []Ket) float64 {
 	// Magnitude of projection of output onto basis
 	magnitude := qce.out.Dotp(basisVec) / basisVec.Dotp(basisVec)
 
-	return real(magnitude * magnitude)
+	return real(magnitude)*real(magnitude) + imag(magnitude)*imag(magnitude)
 }
 
 func (qc *QuantumCircuit) addGate(g Gate) {
