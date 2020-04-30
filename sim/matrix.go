@@ -1,4 +1,4 @@
-package simulator
+package sim
 
 import (
 	"fmt"
@@ -248,4 +248,20 @@ func (a Matrix) Equals(b Matrix, epsilon complex128) bool {
 	}
 
 	return true
+}
+
+// Creates the identity matrix of given size
+func Identity(size int) Matrix {
+	m := Matrix{
+		Rows:   size,
+		Cols:   size,
+		Stride: size,
+		Data:   make([]complex128, size*size),
+	}
+
+	for i := 0; i < size; i++ {
+		m.Data[i*size+i] = 1
+	}
+
+	return m
 }

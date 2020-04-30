@@ -1,4 +1,4 @@
-package simulator
+package sim
 
 import (
 	"math"
@@ -181,6 +181,28 @@ func createCX(control, target, numQubits int) *Gate {
 		Matrix: *combinedMatrix,
 		name:   CX,
 	}
+}
+
+// Makes a quantum wire, a gate that performs no operation
+func createWire(numQubits int) *Gate {
+	if numQubits == 0 {
+		return &Gate{
+			Matrix: Matrix{
+				Rows:   0,
+				Cols:   0,
+				Stride: 0,
+				Data:   []complex128{},
+			},
+			name: WIRE,
+		}
+	}
+
+	size := int(math.Pow(2, float64(numQubits)))
+	g := Gate{
+		Matrix: Identity(size),
+		name:   WIRE,
+	}
+	return &g
 }
 
 // Combines a set of gates into one using matrix multiplication

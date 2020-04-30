@@ -1,4 +1,4 @@
-package simulator
+package sim
 
 import (
 	"fmt"
@@ -166,6 +166,40 @@ func TestQuantumCircuit_CX(t *testing.T) {
 }
 
 func TestQuantumCircuit_Compile(t *testing.T) {
+	t.Run("Compilation on no gates", func(t *testing.T) {
+		qc := QuantumCircuit{
+			numQubits:    2,
+			gates:        []Gate{},
+			compileValid: false,
+			compiled:     Gate{},
+		}
+		expected := QuantumCircuit{
+			numQubits:    2,
+			gates:        []Gate{},
+			compileValid: true,
+			compiled: Gate{
+				Matrix: Matrix{
+					Rows:   4,
+					Cols:   4,
+					Stride: 4,
+					Data: []complex128{
+						1, 0, 0, 0,
+						0, 1, 0, 0,
+						0, 0, 1, 0,
+						0, 0, 0, 1,
+					},
+				},
+				name: 1,
+			},
+		}
+
+		qc.Compile()
+
+		if !qc.compiled.Equals(&expected.compiled, StdEpsilon) {
+			t.Errorf("Compile() got %v, expected %v", qc.compiled, expected.compiled)
+		}
+	})
+
 	t.Run("Compile CX on two qubits", func(t *testing.T) {
 		qc := &QuantumCircuit{
 			numQubits: 2,
@@ -174,7 +208,7 @@ func TestQuantumCircuit_Compile(t *testing.T) {
 		expected := *createCX(0, 1, 2)
 		qc.Compile()
 		if !qc.compiled.Matrix.Equals(expected.Matrix, StdEpsilon) {
-			t.Errorf("Compiling X gate makes circuit %v, expected %v", qc.compiled, expected)
+			t.Errorf("Compiling CX gate makes circuit %v, expected %v", qc.compiled, expected)
 		}
 		if !qc.compileValid {
 			t.Errorf("Compiling circuit does not make compile valid")
@@ -544,6 +578,123 @@ func TestQuantumCircuitExecution_MeasureProbabilities(t *testing.T) {
 			}
 			if got := qce.MeasureProbabilities(); !floatsEqual(got, tt.want, FloatEpsilon) {
 				t.Errorf("MeasureProbabilities() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestQuantumCircuit_AddCircuit(t *testing.T) {
+	t.Run("Add empty circuit", func(t *testing.T) {
+		qc := QuantumCircuit{
+			numQubits:    2,
+			gates:        []Gate{*createH([]int{0, 1}, 2)},
+			compileValid: true,
+			compiled:     *createH([]int{0, 1}, 2),
+		}
+		toAdd := QuantumCircuit{
+			numQubits:    2,
+			gates:        []Gate{},
+			compileValid: false,
+			compiled:     Gate{},
+		}
+		expected := QuantumCircuit{
+			numQubits:    2,
+			gates:        []Gate{*createH([]int{0, 1}, 2), *createWire(2)},
+			compileValid: false,
+			compiled:     *createH([]int{0, 1}, 2),
+		}
+
+		qc.AddCircuit(toAdd)
+
+		if qc.numQubits != expected.numQubits || len(qc.gates) != len(expected.gates) || qc.compileValid != expected.compileValid {
+			t.Errorf("AddCircuit got %v, wanted %v", qc, expected)
+		}
+	})
+	/*
+	     {2 [{{4 4 4 [(0.5000000000000001+0i) (0.5000000000000001+0i) (0.5000000000000001+0i) (0.5000000000000001+0i) (0.5000000000000001+0i) (-0.5000000000000001+0i) (0.5000000000000001+0i) (-0.5000000000000001+0i) (0.5000000000000001+0i) (0.5000000000000001+0i) (-0.5000000000000001+0i) (-0.5000000000000001+0i) (0.5000000000000001+0i) (-0.5000000000000001+0i) (-0.5000000000000001+0i) (0.5000000000000001-0i)]} 0}
+	         {{4 4 4 [(1+0i) (0+0i) (0+0i) (0+0i) (0+0i) (1+0i) (0+0i) (0+0i) (0+0i) (0+0i) (1+0i) (0+0i) (0+0i) (0+0i) (0+0i) (1+0i)]} 1}] false {{4 4 4 [(0.5000000000000001+0i) (0.5000000000000001+0i) (0.5000000000000001+0i) (0.5000000000000001+0i) (0.5000000000000001+0i) (-0.5000000000000001+0i) (0.5000000000000001+0i) (-0.5000000000000001+0i) (0.5000000000000001+0i) (0.5000000000000001+0i) (-0.5000000000000001+0i) (-0.5000000000000001+0i) (0.5000000000000001+0i) (-0.5000000000000001+0i) (-0.5000000000000001+0i) (0.5000000000000001-0i)]} 0}},
+
+	     {2 [{{4 4 4 [(0.5000000000000001+0i) (0.5000000000000001+0i) (0.5000000000000001+0i) (0.5000000000000001+0i) (0.5000000000000001+0i) (-0.5000000000000001+0i) (0.5000000000000001+0i) (-0.5000000000000001+0i) (0.5000000000000001+0i) (0.5000000000000001+0i) (-0.5000000000000001+0i) (-0.5000000000000001+0i) (0.5000000000000001+0i) (-0.5000000000000001+0i) (-0.5000000000000001+0i) (0.5000000000000001-0i)]} 0}]
+	   false {{4 4 4 [(0.5000000000000001+0i) (0.5000000000000001+0i) (0.5000000000000001+0i) (0.5000000000000001+0i) (0.5000000000000001+0i) (-0.5000000000000001+0i) (0.5000000000000001+0i) (-0.5000000000000001+0i) (0.5000000000000001+0i) (0.5000000000000001+0i) (-0.5000000000000001+0i) (-0.5000000000000001+0i) (0.5000000000000001+0i) (-0.5000000000000001+0i) (-0.5000000000000001+0i) (0.5000000000000001-0i)]} 0}}
+	*/
+
+}
+
+func TestQuantumCircuitExecution_MeasureProbabilityOn(t *testing.T) {
+	type fields struct {
+		in       []Ket
+		register ColVec
+		out      ColVec
+	}
+	type args struct {
+		qubit int
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   float64
+	}{
+		{
+			name: "Probability of measuring a single off qubit",
+			fields: fields{
+				in:       []Ket{ZeroKet},
+				register: ColVec(ZeroKet),
+				out:      ColVec(ZeroKet),
+			},
+			args: args{qubit: 0},
+			want: 0,
+		},
+		{
+			name: "Probability of measuring a single on qubit",
+			fields: fields{
+				in:       []Ket{OneKet},
+				register: ColVec(OneKet),
+				out:      ColVec(OneKet),
+			},
+			args: args{qubit: 0},
+			want: 1,
+		},
+		{
+			name: "Probability of measuring the first qubit ON in the equal superposition state in 3 qubits",
+			fields: fields{
+				in:       []Ket{ZeroKet, ZeroKet, ZeroKet},
+				register: KronKets([]Ket{ZeroKet, ZeroKet, ZeroKet}),
+				out: ColVec{
+					Rows:   8,
+					Cols:   1,
+					Stride: 1,
+					Data:   []complex128{0.35355339, 0.35355339, 0.35355339, 0.35355339, 0.35355339, 0.35355339, 0.35355339, 0.35355339},
+				},
+			},
+			args: args{qubit: 1},
+			want: 0.5,
+		},
+		{
+			name: "Probability of measuring 1 in first qubit of four qubit state",
+			fields: fields{
+				in:       []Ket{OneKet, OneKet, OneKet, OneKet},
+				register: KronKets([]Ket{OneKet, OneKet, OneKet, OneKet}),
+				out: ColVec{
+					Rows:   16,
+					Cols:   1,
+					Stride: 1,
+					Data:   []complex128{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.707106781, 0.707106781},
+				},
+			},
+			args: args{qubit: 0},
+			want: 1,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			qce := &QuantumCircuitExecution{
+				in:       tt.fields.in,
+				register: tt.fields.register,
+				out:      tt.fields.out,
+			}
+			if got := qce.MeasureProbabilityOn(tt.args.qubit); !floatEqual(got, tt.want, FloatEpsilon) {
+				t.Errorf("MeasureProbabilityOn() = %v, want %v", got, tt.want)
 			}
 		})
 	}

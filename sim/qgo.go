@@ -1,4 +1,4 @@
-package simulator
+package sim
 
 import (
 	"fmt"
@@ -51,6 +51,33 @@ func (qce *QuantumCircuitExecution) MeasureProbabilities() []float64 {
 	return probabilities
 }
 
+// Probability that measuring a particular qubit in the standard basis will return ON
+// Calculated as the sum of the probabilities of all the output states that have that one qubit ON
+func (qce *QuantumCircuitExecution) MeasureProbabilityOn(qubit int) float64 {
+	numQubits := int(math.Log2(float64(qce.out.Size())))
+	probSum := 0.0
+
+	for i := 0; i < qce.out.Size(); i++ {
+		byteStr := fmt.Sprintf("%0"+strconv.Itoa(numQubits)+"v", strconv.FormatInt(int64(i), 2))
+		if byteStr[qubit] == '0' {
+			continue
+		}
+
+		var basis []Ket
+		for _, c := range byteStr {
+			if c == '0' {
+				basis = append(basis, ZeroKet)
+			} else if c == '1' {
+				basis = append(basis, OneKet)
+			}
+		}
+
+		probSum += qce.MeasureProbability(basis)
+	}
+
+	return probSum
+}
+
 // Measures the probability of reading out a certain vector
 func (qce *QuantumCircuitExecution) MeasureProbability(basis []Ket) float64 {
 	// Check dimensions of the measurement basis
@@ -95,7 +122,11 @@ func (qc *QuantumCircuit) X(qubit int) {
 
 // Compiles all gates in the circuit into one compiled operation
 func (qc *QuantumCircuit) Compile() {
-	qc.compiled = *Combine(42, qc.gates...)
+	if len(qc.gates) == 0 {
+		qc.compiled = *createWire(qc.numQubits)
+	} else {
+		qc.compiled = *Combine(42, qc.gates...)
+	}
 	qc.compileValid = true
 }
 
@@ -117,4 +148,19 @@ func (qc *QuantumCircuit) Exec(qubitStates []Ket) *QuantumCircuitExecution {
 		register: input,
 		out:      NewColVec(*qc.compiled.Matrix.Mul((Matrix)(input))),
 	}
+}
+
+// Adds another QuantumCircuit to the given QuantumCircuit
+// Compiles the given QuantumCircuit, then adds that single
+// gate to the existing QuantumCircuit.
+func (qc *QuantumCircuit) AddCircuit(c QuantumCircuit) {
+	if qc.numQubits != c.numQubits {
+		panic("Cannot add circuit of different number of qubits")
+	}
+
+	if !c.compileValid {
+		c.Compile()
+	}
+
+	qc.addGate(c.compiled)
 }

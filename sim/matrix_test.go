@@ -1,4 +1,4 @@
-package simulator
+package sim
 
 import (
 	"math"
@@ -935,6 +935,61 @@ func TestMatrix_Equals(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := tt.a.Equals(tt.args.b, tt.args.epsilon); got != tt.want {
 				t.Errorf("Equals() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestIdentity(t *testing.T) {
+	type args struct {
+		size int
+	}
+	tests := []struct {
+		name string
+		args args
+		want Matrix
+	}{
+		{
+			name: "Identity of size 1",
+			args: args{size: 1},
+			want: Matrix{
+				Rows:   1,
+				Cols:   1,
+				Stride: 1,
+				Data:   []complex128{1},
+			},
+		},
+		{
+			name: "Identity of size 2",
+			args: args{size: 2},
+			want: Matrix{
+				Rows:   2,
+				Cols:   2,
+				Stride: 2,
+				Data:   []complex128{1, 0, 0, 1},
+			},
+		},
+		{
+			name: "Identity of size 5",
+			args: args{size: 5},
+			want: Matrix{
+				Rows:   5,
+				Cols:   5,
+				Stride: 5,
+				Data: []complex128{
+					1, 0, 0, 0, 0,
+					0, 1, 0, 0, 0,
+					0, 0, 1, 0, 0,
+					0, 0, 0, 1, 0,
+					0, 0, 0, 0, 1,
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := Identity(tt.args.size); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Identity() = %v, want %v", got, tt.want)
 			}
 		})
 	}
